@@ -14,15 +14,17 @@ if (args.length && (args.length !== 2 || args[0] !== "--ref" || !args[1])) {
 const ref = args[1];
 const directory = await mkdtemp(join(tmpdir(), "help-answer-install-check-"));
 const home = join(directory, "daemon");
+const paseoCli = process.env.HELP_ANSWER_PASEO_CLI || "paseo";
 await mkdir(home, { mode: 0o700 });
 const run = async (command, values) => (await exec(command, values, {
   cwd: root, timeout: 60_000, maxBuffer: 2 * 1024 * 1024,
 })).stdout;
-const cli = (values) => run("paseo", [...values, "--home", home]);
+const cli = (values) => run(paseoCli, [...values, "--home", home]);
 let startAttempted = false;
 let ready = false;
 let report;
 try {
+  const paseoVersion = (await run(paseoCli, ["--version"])).trim();
   let source = "https://github.com/MinLeeV5/paseo-help-answer-plugins.git";
   if (!ref) {
     source = join(directory, "source");
@@ -58,7 +60,7 @@ try {
   }
   const sourceKind = plugin.installation?.identity?.kind;
   if (sourceKind !== (ref ? "git" : "directory")) throw new Error("Unexpected installed source kind");
-  report = { passed: true, source: ref ? "git" : "clean-directory", ref: ref ?? null,
+  report = { passed: true, paseoVersion, source: ref ? "git" : "clean-directory", ref: ref ?? null,
     pluginId: plugin.id, status: plugin.status, modelCalls: 0 };
 } finally {
   if (startAttempted) {

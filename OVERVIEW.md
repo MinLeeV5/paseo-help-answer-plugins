@@ -10,7 +10,7 @@ Suggestions belong to the agent whose composer is visible. Leaving that agent's 
 
 ## Setup and settings
 
-Requires Paseo 0.13 desktop (`>=0.13.0-beta.1 <0.14.0`) with plugins enabled and support for background workspaces, plus a signed-in provider. Suggestions use the host's metadata models or a configured `provider/model` override, with existing provider authentication. No separate API key is needed.
+Requires Paseo desktop 0.12.0 or newer (`>=0.12.0`) with plugins enabled and support for background workspaces, plus a signed-in provider. Suggestions use the host's metadata models or a configured `provider/model` override, with existing provider authentication. No separate API key is needed.
 
 Automatic generation is enabled by default and can be disabled in plugin settings. To generate manually, choose **Generate reply suggestions** in the command center. When suggestions are available, **Try another set** requests another set.
 
@@ -25,3 +25,5 @@ Each generation sends recent user and assistant text to the selected provider an
 Generation runs in an independent background workspace, outside the current conversation's child-agent list. Helper agents and the workspace are archived after completion, failure or cancellation; ordinary history is retained. Helper completion notifications are suppressed, while normal conversation completion notifications remain enabled.
 
 Native iOS and Android clients are unsupported. Composer integration depends on the desktop interface structure, so Paseo updates may require a plugin update.
+
+On Paseo 0.12, suggestion and settings content follows the app language automatically. After changing the app language, reload the plugin to refresh settings navigation titles and command names. Newer Paseo versions provide live translation for those labels.

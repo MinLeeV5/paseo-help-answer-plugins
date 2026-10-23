@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { contextFromEntries } from "../server/context";
 import { chooseModels } from "../server/models";
 import { parseSuggestions, buildPrompt } from "../server/prompt";
@@ -6,6 +6,7 @@ import { preferences, emptyBatch, type SuggestionBatch } from "../shared/contrac
 import { ReplyStore, fillReply } from "../client/store";
 import { DEFAULT_PROMPT_TEMPLATE, DEFAULT_SYSTEM_PROMPT } from "../shared/prompt";
 import { chinese, english, generationErrorText, resolveUiLocale, translator } from "../client/messages";
+import { legacyPaseoLocale } from "../client/legacy-locale";
 
 const settings = preferences.schema.parse({});
 const suggestion = { id: "one", label: "先看交互", text: "先把交互细化一下。" };
@@ -15,6 +16,49 @@ function batch(id = "a", key = "turn-1"): SuggestionBatch {
 }
 
 describe("prompt and language preferences", () => {
+  it("follows the saved Paseo 0.12 app language ahead of the system language", () => {
+    expect(legacyPaseoLocale('{"language":"zh-CN"}', ["en-US"])).toBe("zh-CN");
+    expect(legacyPaseoLocale('{"language":"en"}', ["zh-CN"])).toBe("en");
+    expect(resolveUiLocale("auto", legacyPaseoLocale('{"language":"fr"}', ["zh-CN"]))).toBe("en");
+  });
+  it("follows the system for an automatic or absent Paseo 0.12 language preference", () => {
+    expect(legacyPaseoLocale('{"language":"system"}', ["zh-CN"])).toBe("zh-CN");
+    expect(legacyPaseoLocale(null, ["en-US"])).toBe("en");
+    expect(legacyPaseoLocale('{}', [])).toBe("en");
+    expect(legacyPaseoLocale(null, ["de-DE", "zh-Hans-SG"])).toBe("zh-CN");
+    expect(legacyPaseoLocale(null, ["zh-TW", "en-US"])).toBe("en");
+  });
+  it("handles malformed and non-string Paseo 0.12 language preferences", () => {
+    for (const raw of ['invalid', 'null', '{"language":12}', '{"language":""}']) {
+      expect(legacyPaseoLocale(raw, ["zh-CN"])).toBe("zh-CN");
+    }
+  });
+  it("loads without the newer SDK translation exports and returns plain labels on Paseo 0.12", async () => {
+    const getItem = vi.fn(() => '{"language":"zh-CN"}');
+    vi.stubGlobal("localStorage", { getItem });
+    vi.doMock("@getpaseo/plugin/client", () => ({ defineTranslations: undefined, useTranslation: undefined }));
+    vi.resetModules();
+    try {
+      const legacy = await import("../client/i18n");
+      expect(legacy.messages.message("title")).toBe("回复建议");
+      expect(legacy.messagesForLanguage("en").message("title")).toBe("Reply suggestions");
+      expect(legacy.initialPaseoLocale({} as never)).toBe("zh-CN");
+      expect(getItem.mock.calls.every(([key]) => key === "@paseo:app-settings")).toBe(true);
+    } finally { vi.doUnmock("@getpaseo/plugin/client"); vi.unstubAllGlobals(); vi.resetModules(); }
+  });
+  it("keeps host translation descriptors and the host locale when the newer SDK is available", async () => {
+    vi.doMock("@getpaseo/plugin/client", () => ({
+      defineTranslations: ({ resources }: { resources: unknown }) => ({ message: (key: string) => ({ resources, key }) }),
+      useTranslation: () => ({ locale: "zh-CN" }),
+    }));
+    vi.resetModules();
+    try {
+      const modern = await import("../client/i18n");
+      expect(modern.messages.message("title")).toMatchObject({ key: "title" });
+      expect(modern.initialPaseoLocale({ i18n: { locale: "en" } } as never)).toBe("en");
+      expect(modern.usePaseoLocale()).toBe("zh-CN");
+    } finally { vi.doUnmock("@getpaseo/plugin/client"); vi.resetModules(); }
+  });
   it("migrates existing settings without changing reply language or custom instructions", async () => {
     const old = { ...settings, uiLanguage: undefined, language: "en", instructions: "Keep it concrete.", count: 5 };
     const migrated = preferences.schema.parse(await preferences.migrate!(old, 1));

@@ -10,13 +10,11 @@ Agent 完整回复后，在桌面输入区上方默认展示 3 个短文案候�
 
 ## 安装
 
-当前预发布版本为 [v0.1.0](https://github.com/MinLeeV5/paseo-help-answer-plugins/releases/tag/v0.1.0)，面向 Paseo 桌面端。插件清单要求 Paseo `>=0.13.0-beta.1 <0.14.0`，实际已验证版本为 0.13.0-beta.1。目标主机需要启用插件、支持后台工作区，并已登录至少一个可用的 Provider。
-
-包含 Tab 隔离修复的 v0.1.1 正在准备发布，[Release 说明](docs/releases/v0.1.1.md)已整理。发布前可将下方命令的 `--ref v0.1.0` 改为 `--ref main` 体验该修复。
+当前预发布版本为 [v0.1.1](https://github.com/MinLeeV5/paseo-help-answer-plugins/releases/tag/v0.1.1)，面向 Paseo 0.12.0 及以上桌面端（`>=0.12.0`）。已验证 0.12.0 与 0.13.0-beta.1 的插件安装，实际桌面 Tab 切换验收使用 0.13.0-beta.1。目标主机需要启用插件、支持后台工作区，并已登录至少一个可用的 Provider。
 
 在已安装 Paseo CLI 的终端执行：
 
-    paseo plugin install https://github.com/MinLeeV5/paseo-help-answer-plugins.git --ref v0.1.0
+    paseo plugin install https://github.com/MinLeeV5/paseo-help-answer-plugins.git --ref v0.1.1
     paseo plugin ls help-answer
 
 确认插件已启用且状态为 `running`，然后打开桌面对话。等待新一轮 Agent 成功完成回复，或在当前对话的命令中心选择「生成回复建议」（Generate reply suggestions）。
@@ -24,9 +22,9 @@ Agent 完整回复后，在桌面输入区上方默认展示 3 个短文案候�
 通过 GitHub 安装后，可检查更新，或显式切换到本次固定版本：
 
     paseo plugin update help-answer --check
-    paseo plugin update help-answer --ref v0.1.0
+    paseo plugin update help-answer --ref v0.1.1
 
-体验 main 分支的开发版本，可将安装命令中的 `--ref v0.1.0` 替换为 `--ref main`。
+体验 main 分支的开发版本，可将安装命令中的 `--ref v0.1.1` 替换为 `--ref main`。
 
 安装和更新命令默认操作本地主机；连接其他 daemon 时，可通过 `--host` 指定目标主机。
 
@@ -68,6 +66,8 @@ Agent 完整回复后，在桌面输入区上方默认展示 3 个短文案候�
 复用的是元数据模型配置与 Provider 登录，候选由插件自己的提示词和独立后台任务生成。模型调用计入所用 Provider 的正常用量。
 
 界面语言默认跟随当前 Paseo 客户端的应用语言，其他语言回退到英文。界面语言与候选回复语言独立：候选默认仍跟随对话，也可单独固定为简体中文或英文。切换界面语言不会替换已有候选、编辑内容或输入框草稿，也不会单独触发模型调用。显式选择中文或 English 后点击保存，会覆盖插件界面的自动跟随；恢复默认设置会重新跟随 Paseo。Paseo 管理的设置导航标题随应用语言显示。
+
+在 Paseo 0.12 中，建议区域和设置内容自动跟随应用语言；切换 Paseo 应用语言后，设置导航标题和命令名称需执行 `paseo plugin reload help-answer` 后更新。新版 Paseo 使用宿主提供的实时翻译接口。
 
 默认提示词中的占位符会在生成时填入候选数量、回复语言、附加要求、上一组候选和对话正文。设置页只展示模板，不展示实际会话内容。提示词由客户端与服务端共用同一份定义；界面切换为中文时，仍展示实际使用的英文原文。原始 Provider / daemon 错误及模型生成的回复内容保持原样。
 
@@ -129,19 +129,19 @@ Paseo 输入区结构或发送按钮的无障碍标签变化时，需要检查�
 
 本地修改后执行 `paseo plugin reload help-answer`。通过 GitHub 安装的副本使用前述 `paseo plugin update` 更新。本插件没有额外生产依赖；插件 SDK、React、React Native、Zod 由 Paseo 提供，package.json 中的依赖用于本地开发和验收。
 
-已完成 TypeScript 严格类型检查、34 项单元测试和 40 项 Chromium 输入区验收；另已验证真实元数据模型调用、后台会话隔离、归档与辅助任务通知抑制，以及实际桌面的 Tab 切换失效行为。浏览器验收使用独立模拟 Composer，完整范围见[验收记录](docs/verification.md)。
+开发依赖以 Paseo 0.12.0 SDK 为最低兼容基线。已完成 TypeScript 严格类型检查、39 项单元测试和 40 项 Chromium 输入区验收；另已验证 0.12.0 与 0.13.0-beta.1 的隔离安装，以及真实元数据模型调用、后台会话隔离、归档与辅助任务通知抑制、实际桌面的 Tab 切换失效行为。浏览器验收使用独立模拟 Composer，完整范围见[验收记录](docs/verification.md)。
 
 - npm test：上下文裁剪、模型选择、结构化校验、会话隔离、去重、取消与归档。
 - npm run test:e2e：真实 Chromium 中验证选择、编辑、原生提交、附件、失败重试、分屏、中文输入法、补全与脚本注入防护。使用独立模拟输入区，不发送真实用户消息。首次在没有 Chrome 的环境运行时，可先运行 npx playwright install chromium。
 - npm run preview：在 http://127.0.0.1:4178 查看同一验收场景。
-- npm run verify:install：将源码复制到没有 node_modules 的临时目录，在独立临时 daemon 上验证安装和 running 状态，完成后停止该 daemon 并清理目录。使用 `npm run verify:install -- --ref v0.1.0` 可验证 Git 标签安装；不调用模型。
+- npm run verify:install：将源码复制到没有 node_modules 的临时目录，在独立临时 daemon 上验证安装和 running 状态，完成后停止该 daemon 并清理目录。使用 `npm run verify:install -- --ref v0.1.1` 可验证 Git 标签安装；通过 `HELP_ANSWER_PASEO_CLI=/absolute/path/to/paseo` 指定待测 CLI，结果包含实际 CLI 版本；不调用模型。
 - npm run verify:live：显式使用本机元数据模型，验证候选生成、后台隔离、服务会话归档和通知。通过普通会话完成事件验证通知通道有效，再检查辅助会话未发出提醒；会产生模型用量。仅处理脚本内置验收对话，并清理自己的资源。连接时使用本机 Paseo credential，该凭据不会打印或保存。
 
 真实生成记录见[模型验收记录](artifacts/live-smoke.json)，内容仅为脚本内置验收对话的候选与检查结果。提示词与语言配置的只读检查见[设置检查记录](artifacts/settings-language-smoke.json)。
 
 ## 发布文档
 
-- [v0.1.1 Release 说明（待发布）](docs/releases/v0.1.1.md)
+- [v0.1.1 Release 说明](docs/releases/v0.1.1.md)
 - [v0.1.1 发布流程](docs/releasing.md)
 - [v0.1.0 Release 说明](docs/releases/v0.1.0.md)
 

@@ -8,15 +8,15 @@
 | 插件 ID | `help-answer` |
 | 插件版本 | `0.1.1`，与 package.json、package-lock.json 保持一致 |
 | Git 标签 | `v0.1.1` |
-| Release 标题 | `v0.1.1 — 修复回复建议 Tab 隔离` |
+| Release 标题 | `v0.1.1 — Tab 隔离修复与 Paseo 0.12 兼容` |
 | 发布类型 | **Pre-release**，不设为 Latest |
 | Release 正文 | [v0.1.1.md](releases/v0.1.1.md) |
-| 主要变更 | Tab 离开后旧候选失效、迟到结果过滤、分屏与草稿保留、双语 OVERVIEW |
+| 主要变更 | Tab 离开后旧候选失效、迟到结果过滤、分屏与草稿保留、Paseo 0.12 兼容、双语 OVERVIEW |
 | 分发方式 | Git 仓库与固定标签安装 |
 
 本流程覆盖 v0.1.1 从发布准备到公开发布的步骤。整理并提交版本与文档不会创建标签或 Release；上一版本为 [v0.1.0](https://github.com/MinLeeV5/paseo-help-answer-plugins/releases/tag/v0.1.0)。
 
-本次延续 Pre-release：已验证宿主为 Paseo 0.13.0-beta.1，输入区依赖 DOM 适配。实际桌面已验证 Tab 切换流程，其他原生窗口交互尚未逐项验收。没有构建脚本或额外生产依赖，无需单独上传安装包；通过 Git 标签安装。
+本次延续 Pre-release：支持 Paseo 0.12.0 及以上版本，已验证 0.12.0 与 0.13.0-beta.1 的隔离安装，输入区依赖 DOM 适配。实际桌面已验证 Tab 切换流程，其他原生窗口交互尚未逐项验收。没有构建脚本或额外生产依赖，无需单独上传安装包；通过 Git 标签安装。
 
 ## 1. 核对版本、代码与验收记录
 
@@ -29,9 +29,9 @@
     gh auth status
     gh release list --repo MinLeeV5/paseo-help-answer-plugins
 
-核对 package.json 与 package-lock.json 的插件版本均为 `0.1.1`，paseo-plugin.json 的 ID 为 `help-answer`，宿主版本要求仍为 `>=0.13.0-beta.1 <0.14.0`。本次发布需包含 Tab 隔离修复提交 `287c0a2`，以及英文默认页 OVERVIEW.md 和中文译文 OVERVIEW.zh-CN.md；两份介绍应说明相同的 Tab 行为、数据范围与模型用量。
+核对 package.json 与 package-lock.json 的插件版本均为 `0.1.1`，paseo-plugin.json 的 ID 为 `help-answer`，宿主版本要求为 `>=0.12.0`。本次发布需包含 Tab 隔离修复提交 `287c0a2`，以及英文默认页 OVERVIEW.md 和中文译文 OVERVIEW.zh-CN.md；两份介绍应说明相同的 Tab 行为、数据范围与模型用量。
 
-代码验收基线为类型检查、34 项单元测试、40 项 Chromium 模拟输入区测试、隔离源码安装和实际桌面 Tab 切换通过，见[验收记录](verification.md)。发布前若代码或依赖发生变化，在最终代码上重新执行以下检查；仅版本与文档修改时，可沿用已有功能验收并复核版本、文档和打包内容：
+代码验收基线为类型检查、39 项单元测试、40 项 Chromium 模拟输入区测试、隔离源码安装和实际桌面 Tab 切换通过，见[验收记录](verification.md)。发布前若代码或依赖发生变化，在最终代码上重新执行以下检查；仅版本与文档修改时，可沿用已有功能验收并复核版本、文档和打包内容：
 
     npm ci
     npm run typecheck
@@ -41,6 +41,8 @@
     npm run verify:install
 
 `verify:install` 在独立临时 daemon 中安装无 node_modules 的源码副本，确认状态为 `running`，完成后停止并清理。它不调用模型。生成链路发生变化时再运行 `npm run verify:live`；该命令使用内置验收对话，会产生模型用量。
+
+最低版本验证可先通过 `npm exec --yes --package=@getpaseo/cli@0.12.0 -- paseo --version` 准备 0.12.0 CLI；运行安装脚本时用 `HELP_ANSWER_PASEO_CLI=/absolute/path/to/0.12.0/paseo` 指定其可执行文件。报告中的 `paseoVersion` 应为 `0.12.0`。同时检查当前宿主版本，避免误用系统中的其他 CLI。
 
 核对版本、依赖及文档链接后，检查打包清单包含 OVERVIEW.md、OVERVIEW.zh-CN.md 和插件入口文件：
 
@@ -56,12 +58,12 @@
 - OVERVIEW.md 英文默认页及新增的 OVERVIEW.zh-CN.md。
 - README.md、验收记录、本流程及 [Release 正文](releases/v0.1.1.md)。
 
-实际发布时，将 README 的“当前预发布版本”链接及主要安装、更新命令统一改为 `v0.1.1`，移除“v0.1.1 正在准备发布”和“待发布”标记；main 安装方式仍标为开发版本。正文中的 `blob/v0.1.1` 和版本比较链接会在标签推送后生效。
+实际发布时，确认 README 的“当前预发布版本”链接及主要安装、更新命令统一为 `v0.1.1`，移除“v0.1.1 正在准备发布”和“待发布”标记；main 安装方式仍标为开发版本。正文中的 `blob/v0.1.1` 和版本比较链接会在标签推送后生效。
 
 确认最终文案后提交并推送。已提交的准备内容无需重复提交：
 
     git diff --check
-    git add package.json package-lock.json OVERVIEW.md OVERVIEW.zh-CN.md README.md docs/verification.md docs/releasing.md docs/releases/v0.1.1.md
+    git add package.json package-lock.json paseo-plugin.json client/i18n.ts client/legacy-locale.ts client/manager.tsx scripts/clean-install-smoke.mjs tests/core.test.ts OVERVIEW.md OVERVIEW.zh-CN.md README.md docs/verification.md docs/releasing.md docs/releases/v0.1.1.md
     git commit -m "chore: prepare v0.1.1 release"
     git push origin main
 
@@ -97,7 +99,7 @@
     gh release create v0.1.1 \
       --repo MinLeeV5/paseo-help-answer-plugins \
       --verify-tag \
-      --title "v0.1.1 — 修复回复建议 Tab 隔离" \
+      --title "v0.1.1 — Tab 隔离修复与 Paseo 0.12 兼容" \
       --notes-file docs/releases/v0.1.1.md \
       --prerelease \
       --latest=false \

@@ -4,6 +4,6 @@
   "description": "Agent 回复后显示短文案候选按钮，点击填入原生输入框，编辑后发送。",
   "media": [],
   "requirements": {
-    "paseo": ">=0.13.0-beta.1 <0.14.0"
+    "paseo": ">=0.12.0"
   }
 }

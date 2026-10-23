@@ -1,13 +1,12 @@
 import { useEffect, useLayoutEffect } from "react";
 import { View } from "react-native";
-import type { PluginClientContext, PluginButtonRegistration, PluginButtonIconProps, PluginText } from "@getpaseo/plugin/client";
-import { useSettings, useTranslation } from "@getpaseo/plugin/client";
-import { Icon } from "@getpaseo/plugin/client/ui";
+import type { PluginClientContext, PluginButtonIconProps } from "@getpaseo/plugin/client";
+import { useSettings } from "@getpaseo/plugin/client";
 import { preferences, readSuggestions, generateSuggestions, confirmSubmission,
   GENERATOR_LABEL, GENERATOR_VALUE, type Preferences, type Anchor, type UiLanguage } from "../shared/contracts";
 import { ReplyStore } from "./store";
 import { DesktopBridge, markerId } from "./web";
-import { messages, messagesForLanguage } from "./i18n";
+import { messages, messagesForLanguage, initialPaseoLocale, usePaseoLocale } from "./i18n";
 import { resolveUiLocale, translator, generationErrorText, type UiLocale, type MessageKey } from "./messages";
 
 type PaseoAgentListResult = Awaited<ReturnType<PluginClientContext["paseo"]["agents"]["list"]>>;
@@ -17,7 +16,7 @@ export class ReplyManager {
   readonly store = new ReplyStore();
   readonly bridge: DesktopBridge;
   private agents = new Map<string, PaseoAgent>();
-  private pills = new Map<string, { registration: PluginButtonRegistration<PluginText>; label: string }>();
+  private pills = new Map<string, { registration: ReturnType<PluginClientContext["addComposerPill"]>; label: string }>();
   private markers = new Map<string, string>();
   private observation: PaseoAgentListResult["subscription"];
   private releaseListener: (() => void) | undefined;
@@ -31,7 +30,7 @@ export class ReplyManager {
   private unsubscribeStore: () => void;
   private removeGenerateCommand: () => void;
   constructor(readonly client: PluginClientContext) {
-    this.locale = resolveUiLocale("auto", client.i18n.locale);
+    this.locale = resolveUiLocale("auto", initialPaseoLocale(client));
     this.bridge = new DesktopBridge(this.store, {
       regenerate: (agentId) => { void this.generate(agentId, true); },
       settings: () => client.openSettings("preferences"),
@@ -95,9 +94,9 @@ export class ReplyManager {
   }
   private register(agent: PaseoAgent): void {
     const manager = this, agentId = agent.id;
-    function TargetIcon({ theme, host, size, color }: PluginButtonIconProps) {
+    function TargetIcon({ theme, host, size }: PluginButtonIconProps) {
       const settings = useSettings(preferences);
-      const { locale } = useTranslation(messages);
+      const locale = usePaseoLocale();
       useLayoutEffect(() => {
         manager.markers.set(agentId, markerId(host.id, agentId));
         manager.syncTargets(); manager.bridge.setTheme(agentId, theme);
@@ -105,7 +104,7 @@ export class ReplyManager {
       useEffect(() => {
         if (settings.status === "ready") manager.configure(settings.values, settings.revision, locale);
       }, [settings.status, settings.status === "ready" ? settings.revision : null, locale]);
-      return <View testID={markerId(host.id, agentId)}><Icon name="MessageCircle" size={size} color={color} /></View>;
+      return <View testID={markerId(host.id, agentId)} style={{ width: size, height: size }} />;
     }
     const registration = this.client.addComposerPill({
       id: "reply-suggestions", workspaceId: agent.workspaceId!, agentId,
