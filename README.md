@@ -10,19 +10,21 @@ Agent 完整回复后，在桌面输入区上方默认展示 3 个短文案候�
 
 ## 安装
 
-当前插件版本为 0.1.0，面向 Paseo 桌面端。插件清单要求 Paseo `>=0.13.0-beta.1 <0.14.0`，实际已验证版本为 0.13.0-beta.1。目标主机需要启用插件、支持后台工作区，并已登录至少一个可用的 Provider。
+当前预发布版本为 [v0.1.0](https://github.com/MinLeeV5/paseo-help-answer-plugins/releases/tag/v0.1.0)，面向 Paseo 桌面端。插件清单要求 Paseo `>=0.13.0-beta.1 <0.14.0`，实际已验证版本为 0.13.0-beta.1。目标主机需要启用插件、支持后台工作区，并已登录至少一个可用的 Provider。
 
 在已安装 Paseo CLI 的终端执行：
 
-    paseo plugin install https://github.com/MinLeeV5/paseo-help-answer-plugins.git --ref main
+    paseo plugin install https://github.com/MinLeeV5/paseo-help-answer-plugins.git --ref v0.1.0
     paseo plugin ls help-answer
 
 确认插件已启用且状态为 `running`，然后打开桌面对话。等待新一轮 Agent 成功完成回复，或在当前对话的命令中心选择「生成回复建议」（Generate reply suggestions）。
 
-通过 GitHub 安装后，可检查和更新：
+通过 GitHub 安装后，可检查更新，或显式切换到本次固定版本：
 
     paseo plugin update help-answer --check
-    paseo plugin update help-answer
+    paseo plugin update help-answer --ref v0.1.0
+
+体验 main 分支的开发版本，可将安装命令中的 `--ref v0.1.0` 替换为 `--ref main`。
 
 安装和更新命令默认操作本地主机；连接其他 daemon 时，可通过 `--host` 指定目标主机。
 
