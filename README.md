@@ -12,7 +12,7 @@ Agent 完整回复后，在桌面输入区上方默认展示 3 个短文案候�
 
 当前预发布版本为 [v0.1.0](https://github.com/MinLeeV5/paseo-help-answer-plugins/releases/tag/v0.1.0)，面向 Paseo 桌面端。插件清单要求 Paseo `>=0.13.0-beta.1 <0.14.0`，实际已验证版本为 0.13.0-beta.1。目标主机需要启用插件、支持后台工作区，并已登录至少一个可用的 Provider。
 
-Tab 切换后的候选失效修复目前位于 main 分支，使用该修复时请把下方命令的 `--ref v0.1.0` 改为 `--ref main`。
+包含 Tab 隔离修复的 v0.1.1 正在准备发布，[Release 说明](docs/releases/v0.1.1.md)已整理。发布前可将下方命令的 `--ref v0.1.0` 改为 `--ref main` 体验该修复。
 
 在已安装 Paseo CLI 的终端执行：
 
@@ -141,8 +141,11 @@ Paseo 输入区结构或发送按钮的无障碍标签变化时，需要检查�
 
 ## 发布文档
 
+- [v0.1.1 Release 说明（待发布）](docs/releases/v0.1.1.md)
+- [v0.1.1 发布流程](docs/releasing.md)
 - [v0.1.0 Release 说明](docs/releases/v0.1.0.md)
-- [首个 Release 发布流程](docs/releasing.md)
+
+插件目录介绍提供[英文默认页](OVERVIEW.md)与[简体中文译文](OVERVIEW.zh-CN.md)。
 
 ## 参考
 
