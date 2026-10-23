@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><title>回复建议 · 桌面验收</title>
+<style>
+body{margin:0;background:#191b20;color:#e7e9ed;font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:1140px;margin:36px auto;padding:0 24px}h1{font-size:20px;font-weight:600;margin:0 0 10px}
+.intro{color:#9ba2b0;margin:0 0 28px}.panes{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+section{border:1px solid #353942;border-radius:12px;padding:18px;background:#202329}
+.agent{font-size:12px;color:#9ba2b0;margin:0 0 12px}.answer{line-height:1.8;margin-bottom:28px;min-height:110px}
+[data-testid=message-input-root]{padding:12px;border:1px solid #424853;border-radius:12px;background:#252932}
+textarea[data-composer-input]{width:100%;min-height:65px;resize:vertical;background:transparent;border:0;outline:0;color:inherit;font:inherit}
+.toolbar{display:flex;justify-content:space-between;align-items:center;color:#9ba2b0;font-size:12px}
+.native-send{margin-left:auto;border:0;background:#cbd5e1;color:#202329;border-radius:7px;padding:7px 10px}.native-send:disabled{opacity:.35}
+.reply-pill{border:1px solid #424853;color:#9ba2b0;background:transparent;border-radius:18px;padding:6px 10px}
+.attachment{font-size:11px;color:#9ba2b0;margin:6px 0}.sent{white-space:pre-wrap;color:#9ba2b0;font-size:12px;margin-top:14px}
+</style>
+<main><h1>回复建议</h1><p class="intro">选择、修改，再发送。两个会话各自保留草稿。</p>
+<div class="panes">
+<section data-testid="pane-a"><div class="agent">Agent A · 插件设计</div><div class="answer">建议先实现桌面版：在 Agent 回复后提供三条候选，选择后暂存为可编辑卡片，最后由用户发送。</div>
+<div data-testid="message-input-root"><textarea data-composer-input aria-label="补充要求 A" placeholder="补充你的要求…"></textarea><div class="attachment">附件：design.md</div><div class="toolbar"><button class="reply-pill" type="button" data-testid="help-answer-pill-a" aria-label="回复建议"><span data-testid="help-answer-target:fixture:a">↳ 回复建议 · 3</span></button><button class="native-send" aria-label="Send message">↑</button></div></div><div class="sent" data-testid="sent-a"></div></section>
+<section data-testid="pane-b"><div class="agent">Agent B · 测试策略</div><div class="answer">关键验证包括会话隔离、中文输入法、发送失败恢复，以及生成结果在新一轮开始后失效。</div>
+<div data-testid="message-input-root"><textarea data-composer-input aria-label="补充要求 B" placeholder="补充你的要求…"></textarea><div class="toolbar"><button class="reply-pill" type="button" data-testid="help-answer-pill-b" aria-label="回复建议"><span data-testid="help-answer-target:fixture:b">↳ 回复建议 · 3</span></button><button class="native-send" aria-label="Send message">↑</button></div></div><div class="sent" data-testid="sent-b"></div></section>
+</div></main><script src="/fixture.js"></script></html>
