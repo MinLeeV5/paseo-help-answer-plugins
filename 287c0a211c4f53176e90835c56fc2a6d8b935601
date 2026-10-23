@@ -1,0 +1,64 @@
+docs/verification.md
+  4f67ec0c510f3851 7-8,18-19,26-30,39,43
+tests/core.test.ts
+  4f67ec0c510f3851 139-193
+README.md
+  4f67ec0c510f3851 15-16,44-45,132
+client/manager.tsx
+  4f67ec0c510f3851 27,146-147,149-151,158-161,165,167-168,170,172-173
+tests/desktop.spec.ts
+  4f67ec0c510f3851 42-51,172-301
+client/store.ts
+  4f67ec0c510f3851 3-8,17-20,30,43,45-46,52-67,79-80,90
+client/web.ts
+  4f67ec0c510f3851 66,74-76,90-97,99,136-137,143,146-147,163-164,168,176,183-193,196,200,205-216,219-226,284-285,312,341,348,359,362,406,412
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.8.1",
+  "base_commit_sha": "287c0a211c4f53176e90835c56fc2a6d8b935601",
+  "prompts": {
+    "4f67ec0c510f3851": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1646e-c4a8-7f33-b0e0-d17f755001a7",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "李伟民 <liweimin@cvte.com>",
+      "messages": [],
+      "total_additions": 340,
+      "total_deletions": 50,
+      "accepted_lines": 324,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.gz.cvte.cn/cas/b149c47c2f6ab845d9d3192011a7456cdfc34b1d2785618239bd06850cdd1d92",
+      "token_usage": {
+        "input_tokens": 1019829,
+        "output_tokens": 375958,
+        "cache_read_tokens": 55411200,
+        "cache_creation_tokens": null,
+        "total_cost": null
+      }
+    },
+    "ca7090beee1ba957": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1677b-3402-7e72-a683-9244ff8c98e2",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "李伟民 <liweimin@cvte.com>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 3,
+      "accepted_lines": 3,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.gz.cvte.cn/cas/d33f9d98977480b23bdf7a9f7d88652b0966ef6a1c4c2c2dbbeb1e7706884290",
+      "token_usage": {
+        "input_tokens": 55100,
+        "output_tokens": 5110,
+        "cache_read_tokens": 326656,
+        "cache_creation_tokens": null,
+        "total_cost": null
+      }
+    }
+  }
+}
