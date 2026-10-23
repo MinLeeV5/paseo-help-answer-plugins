@@ -19,6 +19,7 @@
     "test": "vitest run tests/core.test.ts tests/generator.test.ts",
     "test:e2e": "playwright test --config tests/playwright.config.ts",
     "preview": "node tests/serve.mjs",
+    "verify:install": "node scripts/clean-install-smoke.mjs",
     "verify:live": "node scripts/live-smoke.mjs"
   },
   "devDependencies": {

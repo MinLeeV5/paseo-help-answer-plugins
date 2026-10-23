@@ -1,7 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import type { PaseoApi, PaseoAgent, PaseoAgentHandle, PaseoWorkspaceHandle } from "@getpaseo/client";
+import type { PaseoApi, PaseoAgent, PaseoAgentHandle, PaseoWorkspaceHandle } from "./types";
 import {
   GENERATOR_LABEL, GENERATOR_VALUE, GENERATOR_TITLE,
   emptyBatch, type Preferences, type SuggestionBatch,

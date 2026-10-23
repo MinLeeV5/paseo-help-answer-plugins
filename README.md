@@ -117,6 +117,7 @@ Paseo 输入区结构或发送按钮的无障碍标签变化时，需要检查�
     npm test
     npx playwright install chromium
     npm run test:e2e
+    npm run verify:install
 
 将当前源码目录安装到本机 Paseo：
 
@@ -129,6 +130,7 @@ Paseo 输入区结构或发送按钮的无障碍标签变化时，需要检查�
 - npm test：上下文裁剪、模型选择、结构化校验、会话隔离、去重、取消与归档。
 - npm run test:e2e：真实 Chromium 中验证选择、编辑、原生提交、附件、失败重试、分屏、中文输入法、补全与脚本注入防护。使用独立模拟输入区，不发送真实用户消息。首次在没有 Chrome 的环境运行时，可先运行 npx playwright install chromium。
 - npm run preview：在 http://127.0.0.1:4178 查看同一验收场景。
+- npm run verify:install：将源码复制到没有 node_modules 的临时目录，在独立临时 daemon 上验证安装和 running 状态，完成后停止该 daemon 并清理目录。使用 `npm run verify:install -- --ref v0.1.0` 可验证 Git 标签安装；不调用模型。
 - npm run verify:live：显式使用本机元数据模型，验证候选生成、后台隔离、服务会话归档和通知。通过普通会话完成事件验证通知通道有效，再检查辅助会话未发出提醒；会产生模型用量。仅处理脚本内置验收对话，并清理自己的资源。连接时使用本机 Paseo credential，该凭据不会打印或保存。
 
 真实生成记录见[模型验收记录](artifacts/live-smoke.json)，内容仅为脚本内置验收对话的候选与检查结果。提示词与语言配置的只读检查见[设置检查记录](artifacts/settings-language-smoke.json)。

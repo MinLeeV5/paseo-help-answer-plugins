@@ -39,6 +39,9 @@
     npm test
     npx playwright install chromium
     npm run test:e2e
+    npm run verify:install
+
+`verify:install` 在独立临时 daemon 中安装无 node_modules 的源码副本，验证用户无需开发依赖也能加载插件，并在完成后清理。它不调用模型。
 
 当前验收基线为类型检查、29 项单元测试、29 项 Chromium 模拟输入区测试通过。已有真实主机生成记录见[验收记录](verification.md)。生成链路发生变化时，再运行 `npm run verify:live` 补充验证；该命令使用脚本内置对话，会调用模型并产生用量。
 
@@ -128,7 +131,11 @@
 
 应返回 `tagName: v0.1.0`、`isDraft: false`、`isPrerelease: true`。公开地址为 [v0.1.0 Release](https://github.com/MinLeeV5/paseo-help-answer-plugins/releases/tag/v0.1.0)。
 
-在验收主机验证固定标签安装：
+通过隔离主机检查固定标签安装，命令结束后会停止并清理该临时主机：
+
+    npm run verify:install -- --ref v0.1.0
+
+用户在实际主机安装本次版本：
 
     paseo plugin install https://github.com/MinLeeV5/paseo-help-answer-plugins.git --ref v0.1.0
     paseo plugin ls help-answer

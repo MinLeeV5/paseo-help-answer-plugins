@@ -2,7 +2,7 @@
 
 环境：Paseo daemon 0.13.0-beta.1，Node.js 22.22.0。
 
-v0.1.0 发布前复验（2026-10-23）：依赖已通过 `npm ci` 按锁文件重新安装，TypeScript 严格类型检查、29 项单元测试和 29 项 Chromium 模拟输入区验收全部通过。真实主机生成与通知验证沿用下方记录；原生窗口逐项点击验收仍未完成。
+v0.1.0 发布前复验（2026-10-23）：依赖已通过 `npm ci` 按锁文件重新安装，TypeScript 严格类型检查、29 项单元测试和 29 项 Chromium 模拟输入区验收全部通过。另已通过无 node_modules 的干净源码安装检查，隔离临时主机中插件状态为 running，检查后已停止并清理该主机。真实主机生成与通知验证沿用下方记录；原生窗口逐项点击验收仍未完成。
 
 | 检查 | 结果 |
 | --- | --- |
@@ -26,6 +26,7 @@ v0.1.0 发布前复验（2026-10-23）：依赖已通过 `npm ci` 按锁文件�
 | 真实辅助任务清理 | 生成 Agent、服务会话及工作区已归档 |
 | 真实通知对照 | 收到普通会话 finished 事件；辅助会话完成提醒为 0 |
 | 插件安装与重新加载 | help-answer 状态 running |
+| 无开发依赖的源码安装 | 独立临时主机中状态 running，检查后清理；不调用模型 |
 | 重新加载后读取真实主机设置 | ready，界面语言默认 auto；默认提示词不是可写设置 |
 
 浏览器测试使用独立模拟 Composer，未向真实用户对话发送消息。真实 daemon 检查使用脚本内置的隔离验收对话，覆盖模型调用、后台任务与归档。Paseo 原生窗口的逐项点击验收未完成，辅助功能读取窗口超时。
@@ -36,4 +37,4 @@ v0.1.0 发布前复验（2026-10-23）：依赖已通过 `npm ci` 按锁文件�
 
 交互截图：[桌面验收场景](desktop-preview.png)。
 
-重新验证：npm run typecheck、npm test、npm run test:e2e。npm run verify:live 会实际调用元数据模型。
+重新验证：npm run typecheck、npm test、npm run test:e2e、npm run verify:install。固定 Git 版本可用 npm run verify:install -- --ref v0.1.0 检查。npm run verify:live 会实际调用元数据模型。

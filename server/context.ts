@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { PaseoApi } from "@getpaseo/client";
+import type { PaseoApi } from "./types";
 import type { Anchor, Preferences } from "../shared/contracts";
 
 export interface Exchange { role: "user" | "assistant"; text: string }

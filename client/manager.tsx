@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect } from "react";
 import { View } from "react-native";
-import type { PaseoAgent, PaseoAgentListResult, OwnedSubscription } from "@getpaseo/client";
 import type { PluginClientContext, PluginButtonRegistration, PluginButtonIconProps, PluginText } from "@getpaseo/plugin/client";
 import { useSettings, useTranslation } from "@getpaseo/plugin/client";
 import { Icon } from "@getpaseo/plugin/client/ui";
@@ -11,13 +10,16 @@ import { DesktopBridge, markerId } from "./web";
 import { messages, messagesForLanguage } from "./i18n";
 import { resolveUiLocale, translator, generationErrorText, type UiLocale, type MessageKey } from "./messages";
 
+type PaseoAgentListResult = Awaited<ReturnType<PluginClientContext["paseo"]["agents"]["list"]>>;
+type PaseoAgent = PaseoAgentListResult["entries"][number]["agent"];
+
 export class ReplyManager {
   readonly store = new ReplyStore();
   readonly bridge: DesktopBridge;
   private agents = new Map<string, PaseoAgent>();
   private pills = new Map<string, { registration: PluginButtonRegistration<PluginText>; label: string }>();
   private markers = new Map<string, string>();
-  private observation: OwnedSubscription<PaseoAgentListResult> | undefined;
+  private observation: PaseoAgentListResult["subscription"];
   private releaseListener: (() => void) | undefined;
   private timer: ReturnType<typeof setInterval> | undefined;
   private stopped = false;

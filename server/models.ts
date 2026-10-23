@@ -1,4 +1,4 @@
-import type { PaseoApi, PaseoAgent, PaseoProviderSnapshotResult } from "@getpaseo/client";
+import type { PaseoApi, PaseoAgent, PaseoProviderSnapshotResult } from "./types";
 import type { Preferences } from "../shared/contracts";
 import { GenerationError } from "../shared/errors";
 
