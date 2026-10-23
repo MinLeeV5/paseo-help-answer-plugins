@@ -1,0 +1,55 @@
+client/manager.tsx
+  4f67ec0c510f3851 3-4,9,19,33,97,99,107
+client/legacy-locale.ts
+  4f67ec0c510f3851 1-35
+docs/releasing.md
+  4f67ec0c510f3851 11,14,19,32,34,45-46,61,66,102
+README.md
+  4f67ec0c510f3851 13,17,25,27,70-71,132,137,144
+client/i18n.ts
+  4f67ec0c510f3851 1-3,5-6,8-29,37-46,48
+tests/core.test.ts
+  4f67ec0c510f3851 1,9,19-61
+OVERVIEW.md
+  4f67ec0c510f3851 13,28-29
+docs/releases/v0.1.1.md
+  4f67ec0c510f3851 1,11,20,36-37,46
+docs/verification.md
+  4f67ec0c510f3851 3,7,19-20,37,40,48
+scripts/clean-install-smoke.mjs
+  4f67ec0c510f3851 17,22,27,63
+paseo-plugin.json
+  4f67ec0c510f3851 7
+OVERVIEW.zh-CN.md
+  4f67ec0c510f3851 13,28-29
+package.json
+  4f67ec0c510f3851 26-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.8.1",
+  "base_commit_sha": "4db481c46e3280bc2a3393b5a396307aea1a90e6",
+  "prompts": {
+    "4f67ec0c510f3851": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1646e-c4a8-7f33-b0e0-d17f755001a7",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "李伟民 <liweimin@cvte.com>",
+      "messages": [],
+      "total_additions": 178,
+      "total_deletions": 57,
+      "accepted_lines": 172,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.gz.cvte.cn/cas/5922d02f8028e41071fc1bc77e467b1356f7c94bcbb0c8d4b77ae42e0f6a5754",
+      "token_usage": {
+        "input_tokens": 1146363,
+        "output_tokens": 426166,
+        "cache_read_tokens": 61805056,
+        "cache_creation_tokens": null,
+        "total_cost": null
+      }
+    }
+  }
+}
