@@ -24,7 +24,7 @@ export class ReplyManager {
   private timer: ReturnType<typeof setInterval> | undefined;
   private stopped = false;
   private polling = false;
-  private requesting = new Set<string>();
+  private requesting = new Map<string, number>();
   private revision = "";
   private uiLanguage: UiLanguage = "auto";
   private locale: UiLocale;
@@ -143,28 +143,34 @@ export class ReplyManager {
     try {
       await Promise.allSettled(this.bridge.visibleAgentIds().map(async (agentId) => {
         const agent = this.agents.get(agentId);
-        if (!agent || (agent.status !== "idle" && agent.status !== "closed") || this.requesting.has(agentId)) return;
+        const version = this.store.get(agentId).version;
+        if (!agent || (agent.status !== "idle" && agent.status !== "closed") || this.requesting.get(agentId) === version) return;
         const batch = await this.client.rpc(readSuggestions, { agentId });
-        if (this.stopped) return;
-        this.store.receive(batch);
+        if (this.stopped || batch.agentId !== agentId || !this.agents.has(agentId) ||
+            !this.bridge.visibleAgentIds().includes(agentId)) return;
+        this.store.receive(batch, version);
         // Only the daemon's completed-turn hook triggers automatic generation.
         // An idle snapshot alone cannot distinguish a completed turn from cancellation.
       }));
     } finally { this.polling = false; }
   }
   async generate(agentId: string, force: boolean): Promise<void> {
-    if (this.stopped || this.requesting.has(agentId) || this.store.get(agentId).busy) return;
-    this.requesting.add(agentId);
+    if (this.stopped || this.requesting.get(agentId) === this.store.get(agentId).version) return;
+    const version = this.store.startGeneration(agentId);
+    if (version === null) return;
+    this.requesting.set(agentId, version);
     const revision = this.revision;
-    this.store.receive({ ...this.store.get(agentId).batch, phase: "generating", error: null, errorCode: null });
     try {
       const batch = await this.client.rpc(generateSuggestions, { agentId, force });
+      this.bridge.visibleAgentIds();
       const status = this.agents.get(agentId)?.status;
-      if (!this.stopped && this.revision === revision && (status === "idle" || status === "closed")) this.store.receive(batch);
+      if (!this.stopped && batch.agentId === agentId && this.revision === revision &&
+          (status === "idle" || status === "closed")) this.store.receive(batch, version);
     } catch {
+      this.bridge.visibleAgentIds();
       if (!this.stopped && this.revision === revision) this.store.receive({ ...this.store.get(agentId).batch,
-        phase: "error", error: translator(this.locale)("errorConnection"), errorCode: "connection" });
-    } finally { this.requesting.delete(agentId); }
+        phase: "error", error: translator(this.locale)("errorConnection"), errorCode: "connection" }, version);
+    } finally { if (this.requesting.get(agentId) === version) this.requesting.delete(agentId); }
   }
   private async confirm(agentId: string, anchor: Anchor, text: string, canceled: () => boolean): Promise<boolean> {
     const deadline = Date.now() + 12_000;

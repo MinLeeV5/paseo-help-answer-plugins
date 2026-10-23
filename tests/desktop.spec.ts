@@ -39,6 +39,16 @@ test("keeps short clickable labels and fills the full reply into the native comp
   await expect(page.getByTestId("sent-a")).toBeEmpty();
 });
 
+test("keeps the Agent binding when the SDK pill wrapper uses display contents", async ({ page }) => {
+  await page.evaluate(() => {
+    document.querySelector<HTMLElement>('[data-testid="pane-a"] .toolbar')!.style.display = "contents";
+  });
+  await expect(widget(page)).toBeVisible();
+  await expect(page.getByTestId("help-answer-pill-a")).toBeHidden();
+  await widget(page).getByRole("button", { name: "按方案实现", exact: true }).click();
+  await expect(input(page)).toHaveValue(first);
+});
+
 test("preserves an existing draft, avoids duplicate insertion, and replaces only the unchanged candidate prefix", async ({ page }) => {
   await input(page).fill("  保留现有输入方式。 ");
   await widget(page).getByRole("button", { name: "按方案实现", exact: true }).click();
@@ -157,6 +167,136 @@ test("keeps fills and sends isolated between two visible conversations", async (
   await expect(page.getByTestId("sent-b")).toHaveText("先补齐会话隔离和发送恢复的测试。");
   await expect(input(page)).toHaveValue(first);
   await expect(page.getByTestId("sent-a")).toBeEmpty();
+});
+
+test("expires suggestions when switching away from an Agent and does not restore cached replies on return", async ({ page }) => {
+  await input(page).fill("保留 A 的草稿");
+  await page.evaluate(() => {
+    (window as any).fixture.previous = (window as any).fixture.store.get("a").batch;
+    document.querySelector<HTMLElement>('[data-testid="pane-a"] [data-testid="message-input-root"]')!.style.display = "none";
+  });
+  await expect(widget(page)).toBeHidden({ timeout: 1500 });
+  await expect(widget(page, "b")).toBeVisible();
+  await page.evaluate(() => {
+    document.querySelector<HTMLElement>('[data-testid="pane-a"] [data-testid="message-input-root"]')!.style.display = "";
+    const fixture = (window as any).fixture;
+    fixture.store.receive(fixture.previous);
+  });
+  await expect(widget(page)).toBeHidden();
+  await expect(input(page)).toHaveValue("保留 A 的草稿");
+  await page.evaluate(() => {
+    const fixture = (window as any).fixture;
+    fixture.store.receive({ ...fixture.previous, sourceKey: "next-turn", anchor: { epoch: "e", seq: 12 } });
+  });
+  await expect(widget(page)).toBeVisible();
+});
+
+test("rebinds suggestions when only the Agent marker changes in a reused composer", async ({ page }) => {
+  await page.getByTestId("pane-b").evaluate((element) => element.remove());
+  await expect(widget(page, "b")).toHaveCount(0);
+  // Let mutations from removing the old pane settle before changing only an attribute.
+  await page.waitForTimeout(200);
+  await page.evaluate(() => {
+    const store = (window as any).fixture.store;
+    store.receive({ ...store.get("b").batch, phase: "ready", sourceKey: "b-new", anchor: { epoch: "e", seq: 12 },
+      suggestions: [{ id: "b-only", label: "B 的候选", text: "只用于 Agent B 的回复。" }] });
+    document.querySelector('[data-testid="help-answer-target:fixture:a"]')!.setAttribute("data-testid", "help-answer-target:fixture:b");
+  });
+  await expect(widget(page)).toHaveCount(0, { timeout: 1500 });
+  await expect(widget(page, "b")).toBeVisible();
+  await widget(page, "b").getByRole("button", { name: "B 的候选", exact: true }).click();
+  await expect(input(page)).toHaveValue("只用于 Agent B 的回复。");
+});
+
+for (const mode of ["hidden", "aria-hidden", "class", "visibility"]) test("expires candidates when the old composer is hidden through " + mode, async ({ page }) => {
+  await page.addStyleTag({ content: ".fixture-inactive{display:none!important}" });
+  await page.evaluate((mode) => {
+    const root = document.querySelector<HTMLElement>('[data-testid="pane-a"] [data-testid="message-input-root"]')!;
+    if (mode === "class") root.classList.add("fixture-inactive");
+    else if (mode === "visibility") root.style.visibility = "hidden";
+    else root.setAttribute(mode, mode === "hidden" ? "" : "true");
+  }, mode);
+  await expect(widget(page)).toBeHidden();
+  await expect(widget(page, "b")).toBeVisible();
+  await page.evaluate((mode) => {
+    const root = document.querySelector<HTMLElement>('[data-testid="pane-a"] [data-testid="message-input-root"]')!;
+    if (mode === "class") root.classList.remove("fixture-inactive");
+    else if (mode === "visibility") root.style.visibility = "";
+    else root.removeAttribute(mode);
+  }, mode);
+  await expect(input(page)).toBeVisible();
+  await expect(widget(page)).toBeHidden();
+});
+
+test("keeps native drafts while expiring suggestions after leaving the Agent screen", async ({ page }) => {
+  await input(page).fill("保留补充");
+  await widget(page).getByRole("button", { name: "按方案实现", exact: true }).click();
+  await page.evaluate(() => {
+    (window as any).fixture.previous = (window as any).fixture.store.get("a").batch;
+    for (const root of document.querySelectorAll<HTMLElement>('[data-testid="message-input-root"]')) root.style.display = "none";
+  });
+  await expect(widget(page)).toHaveCount(0);
+  await expect(widget(page, "b")).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => (window as any).fixture.store.get("a").batch.suggestions.length)).toBe(0);
+  await page.evaluate(() => {
+    (window as any).fixture.bridge.setLocale("en");
+    document.querySelector<HTMLElement>('[data-testid="pane-a"] [data-testid="message-input-root"]')!.style.display = "";
+  });
+  await expect(widget(page)).toBeHidden();
+  await expect(input(page)).toHaveValue(first + "\n\n保留补充");
+  await page.evaluate(() => {
+    const fixture = (window as any).fixture;
+    const version = fixture.store.startGeneration("a");
+    fixture.store.receive(fixture.previous, version);
+  });
+  await expect(widget(page)).toBeVisible();
+  await expect(input(page)).toHaveValue(first + "\n\n保留补充");
+});
+
+test("expires the departed Agent even when another Agent appears after an empty transition", async ({ page }) => {
+  await page.evaluate(() => {
+    for (const root of document.querySelectorAll<HTMLElement>('[data-testid="message-input-root"]')) root.style.display = "none";
+  });
+  await expect(widget(page)).toHaveCount(0);
+  await page.evaluate(() => {
+    document.querySelector<HTMLElement>('[data-testid="pane-b"] [data-testid="message-input-root"]')!.style.display = "";
+  });
+  await expect(input(page, "B")).toBeVisible();
+  await expect.poll(() => page.evaluate(() => (window as any).fixture.store.get("a").batch.suggestions.length)).toBe(0);
+  await page.evaluate(() => {
+    document.querySelector<HTMLElement>('[data-testid="pane-a"] [data-testid="message-input-root"]')!.style.display = "";
+  });
+  await expect(input(page)).toBeVisible();
+  await expect(widget(page)).toBeHidden();
+});
+
+test("keeps suggestions while the same Agent is still visible in another pane", async ({ page }) => {
+  await page.evaluate(() => {
+    document.querySelector('[data-testid="help-answer-target:fixture:b"]')!.setAttribute("data-testid", "help-answer-target:fixture:a");
+    (window as any).fixture.bridge.setTargets([{ agentId: "a", marker: "help-answer-target:fixture:a" }]);
+  });
+  await expect(widget(page)).toHaveCount(2);
+  await page.evaluate(() => {
+    document.querySelector<HTMLElement>('[data-testid="pane-a"] [data-testid="message-input-root"]')!.style.display = "none";
+  });
+  await expect(widget(page)).toHaveCount(1);
+  await expect(page.getByTestId("pane-b").getByRole("button", { name: "按方案实现", exact: true })).toBeVisible();
+  await page.evaluate(() => {
+    document.querySelector<HTMLElement>('[data-testid="pane-a"] [data-testid="message-input-root"]')!.style.display = "";
+  });
+  await expect(widget(page)).toHaveCount(2);
+});
+
+test("hides suggestions while a reused composer contains conflicting Agent identities", async ({ page }) => {
+  await page.evaluate(() => {
+    const marker = document.createElement("span");
+    marker.setAttribute("data-testid", "help-answer-target:fixture:b");
+    document.querySelector('[data-testid="pane-a"] .toolbar')!.appendChild(marker);
+  });
+  await expect(widget(page)).toHaveCount(0);
+  await expect(widget(page, "b")).toHaveCount(1);
+  await expect(input(page)).toHaveValue("");
+  await expect(input(page, "B")).toHaveValue("");
 });
 
 test("leaves autocomplete Enter and autocomplete edits entirely to the native composer", async ({ page }) => {

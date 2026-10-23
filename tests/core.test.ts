@@ -136,6 +136,61 @@ describe("model output", () => {
 });
 
 describe("reply draft isolation", () => {
+  it("expires a departed Agent's candidates without affecting another Agent or accepting the old turn again", () => {
+    const store = new ReplyStore(), previous = batch();
+    store.receive(previous); store.receive(batch("b")); store.choose("a", suggestion);
+    store.dismiss("a");
+    store.receive(previous);
+    store.receive({ ...previous, sourceKey: "same-turn-regenerated", generatedAt: 2 });
+    expect(store.get("a")).toMatchObject({ selected: null, awaitingReply: true });
+    expect(store.get("a").batch.suggestions).toEqual([]);
+    expect(store.get("b").batch.suggestions).toEqual([suggestion]);
+    store.receive({ ...previous, sourceKey: "new-turn", anchor: { epoch: "e", seq: 12 } });
+    expect(store.get("a").batch.sourceKey).toBe("new-turn");
+  });
+  it("rejects late generation and cached results after leaving before the turn anchor is known", () => {
+    const store = new ReplyStore();
+    const version = store.startGeneration("a")!;
+    store.dismiss("a");
+    store.receive(batch(), version);
+    store.receive(batch());
+    expect(store.get("a").batch.suggestions).toEqual([]);
+    expect(store.get("a").awaitingReply).toBe(true);
+    store.busy("a", true); store.busy("a", false);
+    store.receive(batch("a", "following-turn"));
+    expect(store.get("a").batch.sourceKey).toBe("following-turn");
+  });
+  it("allows an explicit fresh generation after a tab switch while ignoring requests from the old view", () => {
+    const store = new ReplyStore(), previous = batch();
+    store.receive(previous);
+    const previousVersion = store.startGeneration("a")!;
+    store.dismiss("a");
+    const currentVersion = store.startGeneration("a")!;
+    store.receive(previous, previousVersion);
+    expect(store.get("a").batch.phase).toBe("generating");
+    const fresh = { ...previous, suggestions: [{ ...suggestion, id: "fresh", text: "新的手动候选。" }] };
+    store.receive(fresh, currentVersion);
+    expect(store.get("a").batch.suggestions).toEqual(fresh.suggestions);
+    store.receive(previous, previousVersion);
+    expect(store.get("a").batch.suggestions).toEqual(fresh.suggestions);
+  });
+  it("drops a request from before a new Agent turn even if that turn finishes before the request", () => {
+    const store = new ReplyStore();
+    store.receive(batch());
+    const version = store.startGeneration("a")!;
+    store.busy("a", true); store.busy("a", false);
+    store.receive(batch(), version);
+    expect(store.get("a").batch.suggestions).toEqual([]);
+    store.receive({ ...batch("a", "following-turn"), anchor: { epoch: "e", seq: 12 } });
+    expect(store.get("a").batch.sourceKey).toBe("following-turn");
+  });
+  it("allows the next completed reply when the Agent was already running on departure", () => {
+    const store = new ReplyStore();
+    store.receive(batch()); store.busy("a", true); store.dismiss("a"); store.busy("a", false);
+    store.receive({ ...batch("a", "following-turn"), anchor: { epoch: "e", seq: 12 } });
+    expect(store.get("a").batch.sourceKey).toBe("following-turn");
+    expect(store.get("a").awaitingReply).toBe(false);
+  });
   it("dismisses submitted suggestions and ignores stale polling results until a newer reply arrives", () => {
     const store = new ReplyStore(), previous = batch();
     store.receive(previous);

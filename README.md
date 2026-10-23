@@ -12,6 +12,8 @@ Agent 完整回复后，在桌面输入区上方默认展示 3 个短文案候�
 
 当前预发布版本为 [v0.1.0](https://github.com/MinLeeV5/paseo-help-answer-plugins/releases/tag/v0.1.0)，面向 Paseo 桌面端。插件清单要求 Paseo `>=0.13.0-beta.1 <0.14.0`，实际已验证版本为 0.13.0-beta.1。目标主机需要启用插件、支持后台工作区，并已登录至少一个可用的 Provider。
 
+Tab 切换后的候选失效修复目前位于 main 分支，使用该修复时请把下方命令的 `--ref v0.1.0` 改为 `--ref main`。
+
 在已安装 Paseo CLI 的终端执行：
 
     paseo plugin install https://github.com/MinLeeV5/paseo-help-answer-plugins.git --ref v0.1.0
@@ -38,6 +40,8 @@ Agent 完整回复后，在桌面输入区上方默认展示 3 个短文案候�
 原输入框已有草稿时，候选放在前面，原稿保留在后面，以空行分隔。重复点击同一候选不会重复追加；切换候选只替换尚未改写的候选开头，保留后续补充。如果已改写候选开头，新选择会保留整段现有文字。发送时直接提交原生输入框的实际内容，原生附件流程继续生效。
 
 普通输入和候选回复都在确认发送后收起建议区域，等待下一轮 Agent 完成回复并生成新候选。轮询返回的旧候选不会重新出现；发送失败保留完整草稿，补全和输入法操作交由原生输入框处理。
+
+候选只用于对应 Agent 的当前查看过程。切换 Tab 或离开该 Agent 的输入区后，旧候选和选中标记失效，切回不会恢复；新一轮成功回复或从命令中心手动生成后重新显示。已填入输入框的草稿继续保留。分屏中仍然可见的 Agent 各自独立，同一 Agent 仍在另一窗格显示时保留其建议。
 
 ## 配置
 
@@ -125,7 +129,7 @@ Paseo 输入区结构或发送按钮的无障碍标签变化时，需要检查�
 
 本地修改后执行 `paseo plugin reload help-answer`。通过 GitHub 安装的副本使用前述 `paseo plugin update` 更新。本插件没有额外生产依赖；插件 SDK、React、React Native、Zod 由 Paseo 提供，package.json 中的依赖用于本地开发和验收。
 
-已完成 TypeScript 严格类型检查、29 项单元测试和 29 项 Chromium 输入区验收；另已验证真实元数据模型调用、后台会话隔离、归档与辅助任务通知抑制。浏览器验收使用独立模拟 Composer，Paseo 原生窗口逐项点击验收尚未完成，详见[验收记录](docs/verification.md)。
+已完成 TypeScript 严格类型检查、34 项单元测试和 40 项 Chromium 输入区验收；另已验证真实元数据模型调用、后台会话隔离、归档与辅助任务通知抑制，以及实际桌面的 Tab 切换失效行为。浏览器验收使用独立模拟 Composer，完整范围见[验收记录](docs/verification.md)。
 
 - npm test：上下文裁剪、模型选择、结构化校验、会话隔离、去重、取消与归档。
 - npm run test:e2e：真实 Chromium 中验证选择、编辑、原生提交、附件、失败重试、分屏、中文输入法、补全与脚本注入防护。使用独立模拟输入区，不发送真实用户消息。首次在没有 Chrome 的环境运行时，可先运行 npx playwright install chromium。
