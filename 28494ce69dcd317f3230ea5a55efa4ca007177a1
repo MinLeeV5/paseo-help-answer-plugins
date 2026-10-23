@@ -1,0 +1,93 @@
+tests/core.test.ts
+  4f67ec0c510f3851 1-202
+index.server.ts
+  4f67ec0c510f3851 1-38
+tests/generator.test.ts
+  4f67ec0c510f3851 1-159
+tests/fixture.ts
+  4f67ec0c510f3851 1-61
+.gitignore
+  4f67ec0c510f3851 1-6
+client/i18n.ts
+  4f67ec0c510f3851 1-19
+scripts/live-smoke.mjs
+  4f67ec0c510f3851 1-118
+client/settings.tsx
+  4f67ec0c510f3851 1-93
+tests/desktop.spec.ts
+  4f67ec0c510f3851 1-282
+README.md
+  4f67ec0c510f3851 1-100
+OVERVIEW.md
+  4f67ec0c510f3851 1-16
+client/manager.tsx
+  4f67ec0c510f3851 1-186
+shared/contracts.ts
+  4f67ec0c510f3851 1-78
+server/context.ts
+  4f67ec0c510f3851 1-68
+package.json
+  4f67ec0c510f3851 1-42
+server/prompt.ts
+  4f67ec0c510f3851 1-54
+paseo-plugin.json
+  4f67ec0c510f3851 1-9
+tests/playwright.config.ts
+  4f67ec0c510f3851 1-9
+tsconfig.json
+  4f67ec0c510f3851 1-28
+client/store.ts
+  4f67ec0c510f3851 1-83
+tests/serve.mjs
+  4f67ec0c510f3851 1-12
+docs/verification.md
+  4f67ec0c510f3851 1-37
+shared/prompt.ts
+  4f67ec0c510f3851 1-32
+artifacts/live-smoke.json
+  4f67ec0c510f3851 1-34
+client/messages.ts
+  4f67ec0c510f3851 1-190
+server/models.ts
+  4f67ec0c510f3851 1-70
+artifacts/settings-language-smoke.json
+  4f67ec0c510f3851 1-9
+index.client.tsx
+  4f67ec0c510f3851 1-13
+client/web.ts
+  4f67ec0c510f3851 1-360
+shared/errors.ts
+  4f67ec0c510f3851 1-14
+server/generator.ts
+  4f67ec0c510f3851 1-210
+tests/fixture.html
+  4f67ec0c510f3851 1-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.8.1",
+  "base_commit_sha": "28494ce69dcd317f3230ea5a55efa4ca007177a1",
+  "prompts": {
+    "4f67ec0c510f3851": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1646e-c4a8-7f33-b0e0-d17f755001a7",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "李伟民 <liweimin@cvte.com>",
+      "messages": [],
+      "total_additions": 2654,
+      "total_deletions": 0,
+      "accepted_lines": 2654,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.gz.cvte.cn/cas/2a54f6485b6da9ce1ba1d277a0514f4ad2a5055a484e100e7f60d91f8a2d4b83",
+      "token_usage": {
+        "input_tokens": 834920,
+        "output_tokens": 242056,
+        "cache_read_tokens": 31593216,
+        "cache_creation_tokens": null,
+        "total_cost": null
+      }
+    }
+  }
+}
