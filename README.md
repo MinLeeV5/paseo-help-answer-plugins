@@ -131,6 +131,11 @@ Paseo 输入区结构或发送按钮的无障碍标签变化时，需要检查�
 
 真实生成记录见[模型验收记录](artifacts/live-smoke.json)，内容仅为脚本内置验收对话的候选与检查结果。提示词与语言配置的只读检查见[设置检查记录](artifacts/settings-language-smoke.json)。
 
+## 发布文档
+
+- [v0.1.0 Release 说明](docs/releases/v0.1.0.md)
+- [首个 Release 发布流程](docs/releasing.md)
+
 ## 参考
 
 - [Paseo 插件文档](https://paseo.sh/zh-CN/docs/plugins)
