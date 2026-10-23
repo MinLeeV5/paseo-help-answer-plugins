@@ -1,0 +1,66 @@
+docs/verification.md
+  4f67ec0c510f3851 7
+docs/releasing.md
+  4f67ec0c510f3851 1,5,9-14,17,19,21,23,32,34,43-45,47,49,51,53,55-57,59,61,64-65,68,75,77,79,82-89,91-93,97,100-101,106,108,110,114,116,118,120,122,129,131,133,137,139,141,144,148,151-152,154
+OVERVIEW.md
+  ca7090beee1ba957 13-15
+  4f67ec0c510f3851 9-10,18-27
+package.json
+  4f67ec0c510f3851 4
+docs/releases/v0.1.1.md
+  4f67ec0c510f3851 1-47
+OVERVIEW.zh-CN.md
+  ca7090beee1ba957 13
+  4f67ec0c510f3851 1-12,14-27
+README.md
+  4f67ec0c510f3851 15,144-145,147-148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.8.1",
+  "base_commit_sha": "241afe7dade36027fe6c5a6249a30265f3533aa7",
+  "prompts": {
+    "4f67ec0c510f3851": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1646e-c4a8-7f33-b0e0-d17f755001a7",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "李伟民 <liweimin@cvte.com>",
+      "messages": [],
+      "total_additions": 132,
+      "total_deletions": 75,
+      "accepted_lines": 157,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.gz.cvte.cn/cas/36b05efa36e8ac6f0a91559c4fe26f120c43bc578de6154279f392e9a8317787",
+      "token_usage": {
+        "input_tokens": 1069874,
+        "output_tokens": 394758,
+        "cache_read_tokens": 57986560,
+        "cache_creation_tokens": null,
+        "total_cost": null
+      }
+    },
+    "ca7090beee1ba957": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1677b-3402-7e72-a683-9244ff8c98e2",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "李伟民 <liweimin@cvte.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 3,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.gz.cvte.cn/cas/ff218dd446e73d7f55ae557d20d8b55a046aae3e6058cad50e8b6a8b8a7a39d2",
+      "token_usage": {
+        "input_tokens": 55100,
+        "output_tokens": 5110,
+        "cache_read_tokens": 326656,
+        "cache_creation_tokens": null,
+        "total_cost": null
+      }
+    }
+  }
+}
