@@ -1,0 +1,51 @@
+docs/verification.md
+  f5e1b938e623bd64 9-10,15-17,24,37-38,52
+README.md
+  f5e1b938e623bd64 13,17,25,27,79-80,82-84,134,139-140,147-148
+docs/releases/v0.1.2.md
+  f5e1b938e623bd64 1-39
+docs/releasing.md
+  f5e1b938e623bd64 1,3,5,7,9,15,19,21,23,25,27,29-33,35,37,39,41,43,45-48,50,52,54,56-58,60
+artifacts/live-smoke.json
+  f5e1b938e623bd64 6,11,13,20,26,30-31
+OVERVIEW.md
+  f5e1b938e623bd64 13,25
+tests/generator.test.ts
+  f5e1b938e623bd64 4,25-28,36,42,46,81-82,87-88,92,97,101,121-122,124-127,129,132-137,150,152,157-221,233-235
+scripts/live-smoke.mjs
+  f5e1b938e623bd64 19,54,58,64,91-92,96,104-107,109
+server/generator.ts
+  f5e1b938e623bd64 1,42,44-48,103-104,113-114
+package.json
+  f5e1b938e623bd64 4
+OVERVIEW.zh-CN.md
+  f5e1b938e623bd64 13,25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.8.1",
+  "base_commit_sha": "a0720911bd5b96b569bf715766852e9643c814e2",
+  "prompts": {
+    "f5e1b938e623bd64": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a16e75-9571-7252-a8cc-543ee17cec03",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "李伟民 <liweimin@cvte.com>",
+      "messages": [],
+      "total_additions": 230,
+      "total_deletions": 215,
+      "accepted_lines": 227,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.gz.cvte.cn/cas/35e9144d7b87feef61e1da6e65a76e21171f98df29d6d23d5b67f21f8d9e573d",
+      "token_usage": {
+        "input_tokens": 140237,
+        "output_tokens": 24623,
+        "cache_read_tokens": 3223296,
+        "cache_creation_tokens": null,
+        "total_cost": null
+      }
+    }
+  }
+}
