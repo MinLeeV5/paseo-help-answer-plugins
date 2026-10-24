@@ -1,7 +1,4 @@
-import { mkdir } from "node:fs/promises";
-import { homedir } from "node:os";
-import { join } from "node:path";
-import type { PaseoApi, PaseoAgent, PaseoAgentHandle, PaseoWorkspaceHandle } from "./types";
+import type { PaseoApi, PaseoAgentHandle } from "./types";
 import {
   GENERATOR_LABEL, GENERATOR_VALUE, GENERATOR_TITLE,
   emptyBatch, type Preferences, type SuggestionBatch,
@@ -23,7 +20,6 @@ function abortReason(signal: AbortSignal): Error {
 function checkSignal(signal: AbortSignal): void { if (signal.aborted) throw abortReason(signal); }
 export interface GeneratorOptions {
   settings(): Promise<Preferences>;
-  directory?: string;
   log?(message: string): void;
 }
 
@@ -43,14 +39,13 @@ export class SuggestionGenerator {
   private disposed = false;
   private active = 0;
   private waiting = new Set<() => void>();
-  private generatorWorkspaces = new Set<string>();
-  private readonly directory: string;
-  constructor(private readonly options: GeneratorOptions) {
-    this.directory = options.directory ?? join(process.env.PASEO_HOME || join(homedir(), ".paseo"), "plugin-data", "help-answer", "generator");
-  }
+  constructor(private readonly options: GeneratorOptions) {}
   read(agentId: string): SuggestionBatch { return this.batches.get(agentId) ?? emptyBatch(agentId); }
-  isGenerator(agent: { workspaceId?: string | null; title?: string | null }): boolean {
-    return (agent.workspaceId != null && this.generatorWorkspaces.has(agent.workspaceId)) || agent.title === GENERATOR_TITLE;
+  isGenerator(agent: { title?: string | null; labels?: Record<string, string> }): boolean {
+    // Lifecycle hooks omit labels, so keep the helper titles as a fallback.
+    // Sharing a workspace must never classify its ordinary agents as helpers.
+    return agent.labels?.[GENERATOR_LABEL] === GENERATOR_VALUE || agent.title === GENERATOR_TITLE ||
+      agent.title === GENERATOR_TITLE + "（后台服务）";
   }
   invalidate(agentId: string): void {
     const job = this.jobs.get(agentId);
@@ -92,7 +87,6 @@ export class SuggestionGenerator {
   private async run(paseo: PaseoApi, agentId: string, job: Job, force: boolean): Promise<SuggestionBatch> {
     let release: (() => void) | undefined;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    let workspace: PaseoWorkspaceHandle | undefined;
     let helper: PaseoAgentHandle | undefined;
     let controller: PaseoAgentHandle | undefined;
     const signal = job.controller.signal;
@@ -106,8 +100,8 @@ export class SuggestionGenerator {
       release = await this.acquire(signal);
       const target = await abortable(paseo.agents.ref(agentId).refresh(), signal);
       const agent = target?.agent;
-      if (!agent || agent.archivedAt || (agent.status !== "idle" && agent.status !== "closed") || this.isGenerator(agent) ||
-          agent.labels?.[GENERATOR_LABEL] === GENERATOR_VALUE || agent.pendingPermissions.length) return publish(emptyBatch(agentId));
+      if (!agent || !agent.workspaceId || agent.archivedAt || (agent.status !== "idle" && agent.status !== "closed") ||
+          this.isGenerator(agent) || agent.pendingPermissions.length) return publish(emptyBatch(agentId));
       const context = await abortable(readContext(paseo, agentId, settings), signal);
       if (!context) return publish(emptyBatch(agentId));
       const previous = this.read(agentId);
@@ -116,18 +110,8 @@ export class SuggestionGenerator {
       }
       publish({ ...emptyBatch(agentId), sourceKey: context.sourceKey, anchor: context.anchor, phase: "generating" });
       const candidates = await abortable(resolveModels(paseo, agent, settings), signal);
-      await mkdir(this.directory, { recursive: true, mode: 0o700 });
-      // All helper ancestry stays inside this independent background workspace.
-      const creating = paseo.workspaces.create({
-        source: { kind: "directory", path: this.directory },
-        title: GENERATOR_TITLE, background: true,
-      });
-      // A late create result must still be archived after cancellation.
-      void creating.then(async (created) => {
-        if (signal.aborted) await created.archive().catch(() => undefined);
-      }, () => undefined);
-      workspace = await abortable(creating, signal);
-      this.generatorWorkspaces.add(workspace.id);
+      // The workspace belongs to the user. Only helper agents are ours to archive.
+      const workspace = paseo.workspaces.ref(agent.workspaceId);
       let lastError: unknown;
       for (const candidate of candidates) {
         checkSignal(signal);
@@ -194,10 +178,6 @@ export class SuggestionGenerator {
       if (timer) clearTimeout(timer);
       if (helper) await helper.archive().catch(() => undefined);
       if (controller) await controller.archive().catch(() => undefined);
-      if (workspace) {
-        await workspace.archive().catch(() => this.options.log?.("后台工作区归档失败。"));
-        this.generatorWorkspaces.delete(workspace.id);
-      }
       release?.();
     }
   }

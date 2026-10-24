@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PaseoApi } from "@getpaseo/client";
 import { SuggestionGenerator } from "../server/generator";
-import { preferences, GENERATOR_LABEL, GENERATOR_VALUE } from "../shared/contracts";
+import { preferences, GENERATOR_LABEL, GENERATOR_VALUE, GENERATOR_TITLE } from "../shared/contracts";
 import contribute from "../index.server";
 import type { PluginServerContext } from "@getpaseo/plugin/server";
 
@@ -22,7 +22,10 @@ function fixture() {
   const createWorkspace = vi.fn(async (_options: unknown) => ({
     id: "background", agents: { create: createAgent }, archive: archivedWorkspace,
   }));
-  const target = { id: "a", workspaceId: "source", cwd: "/source", provider: "codex", model: "gpt-5.4-mini",
+  const refWorkspace = vi.fn((_id: string) => ({
+    id: "source", agents: { create: createAgent }, archive: archivedWorkspace,
+  }));
+  const target = { id: "a", workspaceId: "source" as string | null, cwd: "/source", provider: "codex", model: "gpt-5.4-mini",
     labels: {}, title: "当前任务", status: "idle", pendingPermissions: [], archivedAt: null };
   const timeline = vi.fn(async () => ({ epoch: "e", hasOlder: false, entries: [
     { seqEnd: 1, item: { type: "user_message", text: "设计插件" } },
@@ -30,17 +33,17 @@ function fixture() {
   ] }));
   const api = {
     agents: { ref: () => ({ refresh: async () => ({ agent: target }), timeline: { refetch: timeline } }) },
-    workspaces: { create: createWorkspace },
+    workspaces: { create: createWorkspace, ref: refWorkspace },
     config: { get: async () => ({ config: { metadataGeneration: { providers: [{ provider: "codex", model: "gpt-5.4-mini" }] } } }) },
     providers: { waitForReady: async () => ({ entries: [
       { provider: "codex", enabled: true, models: [{ id: "gpt-5.4-mini", label: "Mini" }] },
     ] }) },
   } as unknown as PaseoApi;
-  return { api, target, timeline, wait, createAgent, createWorkspace, archivedAgent, archivedController, archivedWorkspace };
+  return { api, target, timeline, wait, createAgent, createWorkspace, refWorkspace, archivedAgent, archivedController, archivedWorkspace };
 }
 const generators: SuggestionGenerator[] = [];
 function generator() {
-  const value = new SuggestionGenerator({ settings: async () => settings, directory: "/tmp/help-answer-unit-generator" });
+  const value = new SuggestionGenerator({ settings: async () => settings });
   generators.push(value); return value;
 }
 afterEach(async () => {
@@ -75,24 +78,27 @@ it("keeps cached suggestions on an interface-language save, and invalidates them
   } finally { await cleanup(); }
 });
 
-describe("background generation lifecycle", () => {
-  it("creates hidden standalone work, returns validated replies, and archives both resources", async () => {
+describe("generation in the conversation workspace", () => {
+  it("reuses the source workspace, returns validated replies, and archives only its helper agents", async () => {
     const f = fixture(), service = generator();
     const result = await service.generate(f.api, "a");
     expect(result.phase).toBe("ready");
     expect(result.suggestions[0].text).toBe("先细化交互。");
-    expect(f.createWorkspace.mock.calls[0][0]).toMatchObject({ background: true });
+    expect(f.refWorkspace).toHaveBeenCalledExactlyOnceWith("source");
+    expect(f.createWorkspace).not.toHaveBeenCalled();
     const controller = f.createAgent.mock.calls[0][0] as Record<string, unknown>;
     expect(controller).not.toHaveProperty("prompt");
     expect(controller).not.toHaveProperty("parent");
+    expect(controller).not.toHaveProperty("background");
     const options = f.createAgent.mock.calls[1][0] as Record<string, unknown>;
     expect(options.parent).toBe("controller");
     expect(options.parent).not.toBe(f.target.id);
     expect(options).not.toHaveProperty("callerAgentId");
+    expect(options).not.toHaveProperty("background");
     expect(options.labels).toEqual({ [GENERATOR_LABEL]: GENERATOR_VALUE, "help-answer.source-agent-id": "a" });
     expect(f.archivedAgent).toHaveBeenCalledOnce();
     expect(f.archivedController).toHaveBeenCalledOnce();
-    expect(f.archivedWorkspace).toHaveBeenCalledOnce();
+    expect(f.archivedWorkspace).not.toHaveBeenCalled();
   });
   it("shares in-flight generation and reuses a completed result for the same reply", async () => {
     const f = fixture(), service = generator();
@@ -112,18 +118,23 @@ describe("background generation lifecycle", () => {
     await Promise.resolve();
     expect(service.read("a").phase).toBe("idle");
     expect(f.archivedAgent).toHaveBeenCalledOnce();
-    expect(f.archivedWorkspace).toHaveBeenCalledOnce();
+    expect(f.archivedController).toHaveBeenCalledOnce();
+    expect(f.archivedWorkspace).not.toHaveBeenCalled();
   });
-  it("archives a background workspace even when its create response arrives after cancellation", async () => {
-    const f = fixture(), service = generator(), delayed = deferred<Awaited<ReturnType<typeof f.createWorkspace>>>();
-    f.createWorkspace.mockImplementationOnce(() => delayed.promise);
+  it("archives a late helper after cancellation without touching the source workspace", async () => {
+    const f = fixture(), service = generator(), delayed = deferred<Awaited<ReturnType<typeof f.createAgent>>>();
+    const create = f.createAgent.getMockImplementation()!;
+    f.createAgent.mockImplementationOnce(create).mockImplementationOnce(() => delayed.promise);
     const job = service.generate(f.api, "a");
-    await vi.waitFor(() => expect(f.createWorkspace).toHaveBeenCalledOnce());
+    await vi.waitFor(() => expect(f.createAgent).toHaveBeenCalledTimes(2));
     service.invalidate("a");
     await job;
-    delayed.resolve({ id: "late", agents: { create: f.createAgent }, archive: f.archivedWorkspace });
-    await vi.waitFor(() => expect(f.archivedWorkspace).toHaveBeenCalledOnce());
-    expect(f.createAgent).not.toHaveBeenCalled();
+    delayed.resolve({ id: "late-helper", waitForFinish: f.wait, archive: f.archivedAgent });
+    await vi.waitFor(() => expect(f.archivedAgent).toHaveBeenCalledOnce());
+    expect(f.archivedController).toHaveBeenCalledOnce();
+    expect(f.archivedWorkspace).not.toHaveBeenCalled();
+    expect(f.createWorkspace).not.toHaveBeenCalled();
+    expect(f.wait).not.toHaveBeenCalled();
   });
   it("archives a late controller after cancellation and never starts its helper", async () => {
     const f = fixture(), service = generator(), delayed = deferred<Awaited<ReturnType<typeof f.createAgent>>>();
@@ -136,12 +147,78 @@ describe("background generation lifecycle", () => {
     await vi.waitFor(() => expect(f.archivedController).toHaveBeenCalledOnce());
     expect(f.createAgent).toHaveBeenCalledOnce();
     expect(f.wait).not.toHaveBeenCalled();
+    expect(f.archivedWorkspace).not.toHaveBeenCalled();
   });
-  it("ignores helper agents and permission requests", async () => {
+  it("ignores labeled helpers even after they are renamed", async () => {
     const f = fixture(), service = generator();
     f.target.labels = { [GENERATOR_LABEL]: GENERATOR_VALUE };
     expect((await service.generate(f.api, "a")).phase).toBe("idle");
     expect(f.createWorkspace).not.toHaveBeenCalled();
+    expect(f.createAgent).not.toHaveBeenCalled();
+  });
+  it("does not confuse other conversations in the same workspace with helper agents", async () => {
+    const f = fixture(), service = generator(), pending = deferred<{ status: string; lastMessage: string }>();
+    f.wait.mockImplementationOnce(() => pending.promise);
+    const job = service.generate(f.api, "a");
+    await vi.waitFor(() => expect(f.wait).toHaveBeenCalledOnce());
+    expect(service.isGenerator(f.target)).toBe(false);
+    expect(service.isGenerator({ title: GENERATOR_TITLE })).toBe(true);
+    expect(service.isGenerator({ title: GENERATOR_TITLE + "（后台服务）" })).toBe(true);
+    const second = fixture();
+    second.target.id = "b";
+    expect((await service.generate(second.api, "b")).phase).toBe("ready");
+    expect(second.refWorkspace).toHaveBeenCalledExactlyOnceWith("source");
+    pending.resolve({ status: "idle", lastMessage: output });
+    expect((await job).phase).toBe("ready");
+    expect(f.archivedWorkspace).not.toHaveBeenCalled();
+    expect(second.archivedWorkspace).not.toHaveBeenCalled();
+  });
+  it("skips conversations without a workspace instead of creating one", async () => {
+    const f = fixture(), service = generator();
+    f.target.workspaceId = null;
+    expect((await service.generate(f.api, "a")).phase).toBe("idle");
+    expect(f.refWorkspace).not.toHaveBeenCalled();
+    expect(f.createWorkspace).not.toHaveBeenCalled();
+    expect(f.createAgent).not.toHaveBeenCalled();
+  });
+  it("skips pending permissions", async () => {
+    const f = fixture(), service = generator();
+    f.target.pendingPermissions = [{}] as never[];
+    expect((await service.generate(f.api, "a")).phase).toBe("idle");
+    expect(f.createAgent).not.toHaveBeenCalled();
+  });
+  it("does not create a replacement workspace when the existing workspace is unavailable", async () => {
+    const f = fixture(), service = generator();
+    f.createAgent.mockRejectedValueOnce(new Error("Workspace is archived"));
+    expect((await service.generate(f.api, "a")).phase).toBe("error");
+    expect(f.createWorkspace).not.toHaveBeenCalled();
+    expect(f.archivedWorkspace).not.toHaveBeenCalled();
+  });
+  it("archives helpers when the plugin stops, while preserving the user's workspace", async () => {
+    const f = fixture(), service = generator(), pending = deferred<{ status: string; lastMessage: string }>();
+    f.wait.mockImplementationOnce(() => pending.promise);
+    const job = service.generate(f.api, "a");
+    await vi.waitFor(() => expect(f.wait).toHaveBeenCalledOnce());
+    await service.dispose();
+    await job;
+    expect(f.archivedAgent).toHaveBeenCalledOnce();
+    expect(f.archivedController).toHaveBeenCalledOnce();
+    expect(f.archivedWorkspace).not.toHaveBeenCalled();
+    expect(service.read("a").phase).toBe("idle");
+  });
+  it("archives helpers on timeout and keeps the source workspace open", async () => {
+    vi.useFakeTimers();
+    const f = fixture(), service = generator(), pending = deferred<{ status: string; lastMessage: string }>();
+    f.wait.mockImplementationOnce(() => pending.promise);
+    const job = service.generate(f.api, "a");
+    await vi.waitFor(() => expect(f.wait).toHaveBeenCalledOnce());
+    await vi.advanceTimersByTimeAsync(settings.timeoutSeconds * 1000);
+    const result = await job;
+    expect(result.phase).toBe("error");
+    expect(result.errorCode).toBe("timeout");
+    expect(f.archivedAgent).toHaveBeenCalledOnce();
+    expect(f.archivedController).toHaveBeenCalledOnce();
+    expect(f.archivedWorkspace).not.toHaveBeenCalled();
   });
   it("can manually generate from a closed conversation without resuming its agent", async () => {
     const f = fixture(), service = generator();
@@ -153,7 +230,9 @@ describe("background generation lifecycle", () => {
     const f = fixture(), service = generator();
     f.wait.mockResolvedValueOnce({ status: "idle", lastMessage: "not JSON" });
     expect((await service.generate(f.api, "a")).phase).toBe("error");
-    expect(f.archivedWorkspace).toHaveBeenCalledOnce();
+    expect(f.archivedAgent).toHaveBeenCalledOnce();
+    expect(f.archivedController).toHaveBeenCalledOnce();
+    expect(f.archivedWorkspace).not.toHaveBeenCalled();
     expect((await service.generate(f.api, "a", true)).phase).toBe("ready");
   });
 });

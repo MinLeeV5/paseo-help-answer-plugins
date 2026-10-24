@@ -16,7 +16,7 @@ const driver = new DaemonClient({
 let api, workspace, agent, observation, workspaceObservation, notificationObservation, release, releaseWorkspaces, releaseNotifications, directory;
 const helpers = new Map();
 const runningControllers = new Set();
-const backgroundWorkspaces = new Map();
+const workspaces = new Map();
 const attention = [];
 try {
   await driver.connect(); api = createPaseoApi(driver);
@@ -51,17 +51,17 @@ try {
   const workspacePage = await api.workspaces.list({ filter: { includeBackground: true }, page: { limit: 100 }, subscribe: {} });
   workspaceObservation = workspacePage.subscription;
   releaseWorkspaces = workspaceObservation.subscribe({
-    snapshot: (snapshot) => snapshot.entries.forEach((value) => backgroundWorkspaces.set(value.id, value)),
+    snapshot: (snapshot) => snapshot.entries.forEach((value) => workspaces.set(value.id, value)),
     update: (message) => {
       if (message.type === "workspace_update" && message.payload.kind === "upsert") {
         const value = message.payload.workspace;
-        if (value) backgroundWorkspaces.set(value.id, value);
+        if (value) workspaces.set(value.id, value);
       }
     },
   });
   directory = await mkdtemp(join(tmpdir(), "help-answer-live-"));
   workspace = await api.workspaces.create({
-    source: { kind: "directory", path: directory }, title: "回复建议验收（后台）", background: true,
+    source: { kind: "directory", path: directory }, title: "回复建议验收（临时）",
   });
   agent = await workspace.agents.create({
     config: { provider, thinkingOptionId: selection.thinkingOptionId, mcpServers: {} },
@@ -88,12 +88,12 @@ try {
     else assert(controllerIds.has(helper.labels["paseo.parent-agent-id"]), "生成任务应挂到独立后台服务会话");
     const snapshot = await api.agents.ref(helper.id).refresh();
     assert(snapshot?.agent.archivedAt, "辅助任务未归档");
-    const helperWorkspace = backgroundWorkspaces.get(helper.workspaceId);
-    assert(helperWorkspace?.background, "辅助工作区未隐藏");
+    assert.equal(helper.workspaceId, workspace.id, "辅助任务应复用当前会话的工作区");
+    assert.equal(workspaces.get(helper.workspaceId)?.background ?? false, false, "辅助任务不应修改工作区可见性");
     if (controller) {
       assert(!runningControllers.has(helper.id), "服务会话不应运行模型轮次");
     }
-    checks.push({ role: controller ? "controller" : "generator", independentFromUser: true, background: true, archived: true });
+    checks.push({ role: controller ? "controller" : "generator", independentFromUser: true, sharedWorkspace: true, archived: true });
   }
   await new Promise((resolve) => setTimeout(resolve, 350));
   assert(controllers.every((value) => !runningControllers.has(value.id)), "后台服务会话不应因子任务完成而启动模型轮次");
@@ -101,7 +101,12 @@ try {
   const helperIds = new Set(ownHelpers.map((value) => value.id));
   const helperNotifications = attention.filter((event) => helperIds.has(event.agentId));
   assert.equal(helperNotifications.length, 0, "辅助任务不应触发 Agent Finish 提示");
+  const sourceWorkspace = await workspace.refresh();
+  assert(sourceWorkspace, "生成完成后用户工作区应保持可用");
+  const sourceAgent = await agent.refresh();
+  assert(sourceAgent && !sourceAgent.agent.archivedAt, "生成完成后用户 Agent 不应被归档");
   const report = { passed: true, model: batch.model, suggestions: batch.suggestions, helperChecks: checks,
+    sourceWorkspacePreserved: true, sourceAgentPreserved: true,
     notifications: { ordinaryAgentFinishedObserved: true, helperNotifications: helperNotifications.length } };
   await mkdir("artifacts", { recursive: true });
   await writeFile("artifacts/live-smoke.json", JSON.stringify(report, null, 2) + "\n");

@@ -10,11 +10,11 @@ Agent 完整回复后，在桌面输入区上方默认展示 3 个短文案候�
 
 ## 安装
 
-当前预发布版本为 [v0.1.1](https://github.com/MinLeeV5/paseo-help-answer-plugins/releases/tag/v0.1.1)，面向 Paseo 0.12.0 及以上桌面端（`>=0.12.0`）。已验证 0.12.0 与 0.13.0-beta.1 的插件安装，实际桌面 Tab 切换验收使用 0.13.0-beta.1。目标主机需要启用插件、支持后台工作区，并已登录至少一个可用的 Provider。
+当前版本为 [v0.1.2](https://github.com/MinLeeV5/paseo-help-answer-plugins/releases/tag/v0.1.2)，面向 Paseo 0.12.0 及以上桌面端（`>=0.12.0`）。已验证 0.12.0 与 0.13.0-beta.1 的插件安装，实际桌面 Tab 切换验收使用 0.13.0-beta.1。目标主机需要启用插件，并已登录至少一个可用的 Provider。
 
 在已安装 Paseo CLI 的终端执行：
 
-    paseo plugin install https://github.com/MinLeeV5/paseo-help-answer-plugins.git --ref v0.1.1
+    paseo plugin install https://github.com/MinLeeV5/paseo-help-answer-plugins.git --ref v0.1.2
     paseo plugin ls help-answer
 
 确认插件已启用且状态为 `running`，然后打开桌面对话。等待新一轮 Agent 成功完成回复，或在当前对话的命令中心选择「生成回复建议」（Generate reply suggestions）。
@@ -22,9 +22,9 @@ Agent 完整回复后，在桌面输入区上方默认展示 3 个短文案候�
 通过 GitHub 安装后，可检查更新，或显式切换到本次固定版本：
 
     paseo plugin update help-answer --check
-    paseo plugin update help-answer --ref v0.1.1
+    paseo plugin update help-answer --ref v0.1.2
 
-体验 main 分支的开发版本，可将安装命令中的 `--ref v0.1.1` 替换为 `--ref main`。
+体验 main 分支的开发版本，可将安装命令中的 `--ref v0.1.2` 替换为 `--ref main`。
 
 安装和更新命令默认操作本地主机；连接其他 daemon 时，可通过 `--host` 指定目标主机。
 
@@ -76,10 +76,12 @@ Agent 完整回复后，在桌面输入区上方默认展示 3 个短文案候�
 ## 生成与会话隔离
 
 - 仅成功完成的轮次后生成；取消、失败、等待权限或正在运行时不生成。
-- 创建独立后台工作区。生成任务只挂到该工作区内的专用服务会话，不挂到用户 Agent，不进入当前对话的子 Agent 列表。
+- 复用当前会话的工作区，在其中创建专用服务会话与生成 Agent。不创建额外工作区或固定的 `generator` 项目，也不创建专用生成目录。
+- 生成 Agent 只挂到服务会话，不挂到用户 Agent，不进入当前对话的子 Agent 列表。辅助 Agent 使用当前工作区目录与 Provider 的项目环境，生成提示词要求仅输出候选 JSON、不使用工具。
 - 服务会话不接收提示词、不执行模型轮次；实际生成任务使用 Paseo 对子任务的通知抑制规则，不触发额外的 Agent Finish 提示。普通用户 Agent 的完成提醒保留。
-- 辅助任务带插件专属标签，避免递归生成；完成、失败或取消后归档生成 Agent、服务会话和工作区。
-- 后台任务仍有普通历史，主动显示后台工作区或查看归档时可能看到记录。
+- 辅助任务带插件专属标签，避免递归生成；完成、失败、超时或取消后只归档生成 Agent 与服务会话，保留用户 Agent 和工作区。同一工作区中的其他普通会话继续正常生成建议。
+- 辅助 Agent 沿用当前工作区的可见性，可能出现在会话列表中；归档后仍保留普通历史，无法单独设为后台隐藏。
+- 升级不会删除旧版本已经留下的 `generator` 项目或历史；后续生成不再创建它们。当前会话没有工作区时跳过生成，工作区不可用时返回错误，不另建替代工作区。
 - 同一 Agent 的请求合并，最多同时生成两个任务；新一轮开始后取消旧生成并丢弃迟到结果。
 - 同一轮候选供不同客户端复用；各客户端的选择、编辑与原草稿独立。
 - 不读取工具输出、推理文本或文件内容作为生成素材，不记录对话正文与候选内容日志。
@@ -129,20 +131,21 @@ Paseo 输入区结构或发送按钮的无障碍标签变化时，需要检查�
 
 本地修改后执行 `paseo plugin reload help-answer`。通过 GitHub 安装的副本使用前述 `paseo plugin update` 更新。本插件没有额外生产依赖；插件 SDK、React、React Native、Zod 由 Paseo 提供，package.json 中的依赖用于本地开发和验收。
 
-开发依赖以 Paseo 0.12.0 SDK 为最低兼容基线。已完成 TypeScript 严格类型检查、39 项单元测试和 40 项 Chromium 输入区验收；另已验证 0.12.0 与 0.13.0-beta.1 的隔离安装，以及真实元数据模型调用、后台会话隔离、归档与辅助任务通知抑制、实际桌面的 Tab 切换失效行为。浏览器验收使用独立模拟 Composer，完整范围见[验收记录](docs/verification.md)。
+开发依赖以 Paseo 0.12.0 SDK 为最低兼容基线。已完成 TypeScript 严格类型检查、45 项单元测试和 40 项 Chromium 输入区验收；另已验证 0.12.0 与 0.13.0-beta.1 的隔离安装，以及真实元数据模型调用、同工作区辅助 Agent 归档、用户会话与工作区保留和辅助任务通知抑制。实际桌面的 Tab 切换失效行为沿用 v0.1.1 的验收。浏览器验收使用独立模拟 Composer，完整范围见[验收记录](docs/verification.md)。
 
 - npm test：上下文裁剪、模型选择、结构化校验、会话隔离、去重、取消与归档。
 - npm run test:e2e：真实 Chromium 中验证选择、编辑、原生提交、附件、失败重试、分屏、中文输入法、补全与脚本注入防护。使用独立模拟输入区，不发送真实用户消息。首次在没有 Chrome 的环境运行时，可先运行 npx playwright install chromium。
 - npm run preview：在 http://127.0.0.1:4178 查看同一验收场景。
-- npm run verify:install：将源码复制到没有 node_modules 的临时目录，在独立临时 daemon 上验证安装和 running 状态，完成后停止该 daemon 并清理目录。使用 `npm run verify:install -- --ref v0.1.1` 可验证 Git 标签安装；通过 `HELP_ANSWER_PASEO_CLI=/absolute/path/to/paseo` 指定待测 CLI，结果包含实际 CLI 版本；不调用模型。
-- npm run verify:live：显式使用本机元数据模型，验证候选生成、后台隔离、服务会话归档和通知。通过普通会话完成事件验证通知通道有效，再检查辅助会话未发出提醒；会产生模型用量。仅处理脚本内置验收对话，并清理自己的资源。连接时使用本机 Paseo credential，该凭据不会打印或保存。
+- npm run verify:install：将源码复制到没有 node_modules 的临时目录，在独立临时 daemon 上验证安装和 running 状态，完成后停止该 daemon 并清理目录。使用 `npm run verify:install -- --ref v0.1.2` 可验证 Git 标签安装；通过 `HELP_ANSWER_PASEO_CLI=/absolute/path/to/paseo` 指定待测 CLI，结果包含实际 CLI 版本；不调用模型。
+- npm run verify:live：显式使用本机元数据模型，验证辅助 Agent 复用当前工作区、完成后归档，并确认源会话和工作区未被归档、工作区可见性不变。通过普通会话完成事件验证通知通道有效，再检查辅助会话未发出提醒；会产生模型用量。仅处理脚本内置验收对话，并清理自己的资源。连接时使用本机 Paseo credential，该凭据不会打印或保存。
 
 真实生成记录见[模型验收记录](artifacts/live-smoke.json)，内容仅为脚本内置验收对话的候选与检查结果。提示词与语言配置的只读检查见[设置检查记录](artifacts/settings-language-smoke.json)。
 
 ## 发布文档
 
 - [v0.1.1 Release 说明](docs/releases/v0.1.1.md)
-- [v0.1.1 发布流程](docs/releasing.md)
+- [v0.1.2 Release 说明](docs/releases/v0.1.2.md)
+- [发布流程](docs/releasing.md)
 - [v0.1.0 Release 说明](docs/releases/v0.1.0.md)
 
 插件目录介绍提供[英文默认页](OVERVIEW.md)与[简体中文译文](OVERVIEW.zh-CN.md)。

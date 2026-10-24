@@ -3,30 +3,32 @@
   "model": "codex/gpt-6-luna",
   "suggestions": [
     {
-      "id": "f55310791ea33e457239da21:0:08843f7109",
+      "id": "e8b678bf7b22856f4ad23bae:0:08843f7109",
       "label": "直接实现",
       "text": "直接实现桌面端的候选卡片，然后验证会话隔离。"
     },
     {
-      "id": "f55310791ea33e457239da21:1:5779db93b3",
+      "id": "e8b678bf7b22856f4ad23bae:1:c4b5402e56",
       "label": "先细化交互",
-      "text": "先细化候选卡片的交互，再开始实现。"
+      "text": "先细化候选卡片的交互方案，再开始实现。"
     }
   ],
   "helperChecks": [
     {
       "role": "controller",
       "independentFromUser": true,
-      "background": true,
+      "sharedWorkspace": true,
       "archived": true
     },
     {
       "role": "generator",
       "independentFromUser": true,
-      "background": true,
+      "sharedWorkspace": true,
       "archived": true
     }
   ],
+  "sourceWorkspacePreserved": true,
+  "sourceAgentPreserved": true,
   "notifications": {
     "ordinaryAgentFinishedObserved": true,
     "helperNotifications": 0

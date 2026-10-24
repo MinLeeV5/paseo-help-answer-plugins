@@ -5,5 +5,4 @@ import type { PluginHandlerContext } from "@getpaseo/plugin/server";
 export type PaseoApi = PluginHandlerContext["paseo"];
 export type PaseoAgentHandle = ReturnType<PaseoApi["agents"]["ref"]>;
 export type PaseoAgent = NonNullable<ReturnType<PaseoAgentHandle["current"]>>;
-export type PaseoWorkspaceHandle = Awaited<ReturnType<PaseoApi["workspaces"]["create"]>>;
 export type PaseoProviderSnapshotResult = Awaited<ReturnType<PaseoApi["providers"]["waitForReady"]>>;

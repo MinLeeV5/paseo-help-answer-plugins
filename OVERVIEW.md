@@ -10,7 +10,7 @@ Suggestions belong to the agent whose composer is visible. Leaving that agent's 
 
 ## Setup and settings
 
-Requires Paseo desktop 0.12.0 or newer (`>=0.12.0`) with plugins enabled and support for background workspaces, plus a signed-in provider. Suggestions use the host's metadata models or a configured `provider/model` override, with existing provider authentication. No separate API key is needed.
+Requires Paseo desktop 0.12.0 or newer (`>=0.12.0`) with plugins enabled and a signed-in provider. Suggestions use the host's metadata models or a configured `provider/model` override, with existing provider authentication. No separate API key is needed.
 
 Automatic generation is enabled by default and can be disabled in plugin settings. To generate manually, choose **Generate reply suggestions** in the command center. When suggestions are available, **Try another set** requests another set.
 
@@ -22,7 +22,7 @@ The built-in prompt is displayed read-only and can be copied. Additional instruc
 
 Each generation sends recent user and assistant text to the selected provider and uses that provider's normal model allowance. By default, it uses four conversation turns, with a total limit of 16,000 characters. Tool output and reasoning are excluded from the conversation context.
 
-Generation runs in an independent background workspace, outside the current conversation's child-agent list. Helper agents and the workspace are archived after completion, failure or cancellation; ordinary history is retained. Helper completion notifications are suppressed, while normal conversation completion notifications remain enabled.
+Generation reuses the current conversation's workspace and its project environment. It creates helper agents outside the current conversation's child-agent list, without creating a separate workspace or a `generator` project. Only helper agents are archived after completion, failure or cancellation; your conversation and workspace remain open. Helpers share the workspace's visibility and may appear in its agent list and archived history. Helper completion notifications are suppressed, while normal conversation completion notifications remain enabled.
 
 Native iOS and Android clients are unsupported. Composer integration depends on the desktop interface structure, so Paseo updates may require a plugin update.
 
